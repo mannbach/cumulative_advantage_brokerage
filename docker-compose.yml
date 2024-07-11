@@ -1,0 +1,43 @@
+services:
+  postgres:
+    # due to https://github.com/psycopg/psycopg2/issues/1360:
+    image: postgres:13-alpine
+    # https://stackoverflow.com/questions/56751565/pq-could-not-resize-shared-memory-segment-no-space-left-on-device
+    shm_size: 8g
+    container_name: postgres
+    restart: always
+    volumes:
+      - volume-database:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    env_file:
+      - '${PATH_THIS_CONFIG:-secrets/sample.env}'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    user: "${POSTGRES_USER:-postgres}"
+  cumulative_advantage_brokerage:
+    image: cumulative_advantage_brokerage
+    container_name: cumulative_advantage_brokerage
+    build:
+      context: ./
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    environment:
+      - PATH_CONTAINER_DATA=/mnt/data/
+    env_file:
+      - '${PATH_THIS_CONFIG:-secrets/sample.env}'
+    volumes:
+      - '.:/cumulative_advantage_brokerage'
+      - '${PATH_HOST_DATA:-./data/}:${PATH_CONTAINER_DATA:-/mnt/data}' # Default "./data/"
+      - '${PATH_HOST_OUTPUT:-./output/}:${PATH_CONTAINER_OUTPUT:-/mnt/output/}'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres
+volumes:
+  volume-database:
+    driver: local
