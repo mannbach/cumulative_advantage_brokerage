@@ -1,8 +1,12 @@
+"""Binning of career series metrics base on percentiles.
+"""
 from abc import abstractmethod
 from typing import List, Optional
 
 import numpy as np
-from sqlalchemy.sql import select, func, distinct, alias, and_
+from sqlalchemy import\
+    select, func, distinct,\
+    alias, and_, case, Column
 
 from ..dbm import\
     HasSession, BinsRealization, CumAdvBrokSession,\
@@ -11,6 +15,8 @@ from ..constants import CS_BINS_PERCENTILES
 from .collaborator_filter import CollaboratorFilter, StandardFilter
 
 class PercentileBinner(HasSession):
+    """Percentile-based binning of career series metrics.
+    """
     collaborator_filter: CollaboratorFilter
     id_metric_configuration: int
     percentiles: np.ndarray
@@ -24,6 +30,19 @@ class PercentileBinner(HasSession):
             percentiles: np.ndarray = np.asarray(CS_BINS_PERCENTILES),
             collaborator_filter: CollaboratorFilter = StandardFilter(),
             **kwargs) -> None:
+        """Percentile-based binning of career series metrics.
+
+        Parameters
+        ----------
+        session : CumAdvBrokSession
+            Session object to communicate with the database.
+        id_metric_configuration : int
+            ID of `MetricConfiguration`-object to be used to reference results in database.
+        percentiles : np.ndarray, optional
+            Array of the percentile border-values, including minimum and maximum values, by default np.asarray(CS_BINS_PERCENTILES)
+        collaborator_filter : CollaboratorFilter, optional
+            Filter to apply to the set of all `Collaborator`s., by default StandardFilter()
+        """
         super().__init__(*arg, session=session, **kwargs)
         self.collaborator_filter = collaborator_filter
         self.id_metric_configuration = id_metric_configuration
@@ -34,23 +53,24 @@ class PercentileBinner(HasSession):
         raise NotImplementedError
 
     def compute_binning_borders(self)->np.ndarray:
+        """Compute the binning borders based on the percentiles values.
+        """
+        # Query the maximum value of all collaborators
         q_val_max = self.create_query_max_value()
 
+        # Retrieve only the final values
+        # (career length, citations, productivity)
         a_values = np.asarray(
             [float(res[1])\
                 for res in self.session.execute(q_val_max)])
 
-        # @TODO: This should be replaced using PostgreSQL's own
-        # `percentile_cont/_disc`-functions
-        # (https://www.postgresql.org/docs/9.4/functions-aggregate.html).
-        # Using numpy for this task
-        # - is inefficient as the data needs to be retrieved completely
-        # - is prone to errors, as the binning works differently
+        # Infer border values using numpy's quantile function
         bins = self._create_bins_from_values(
                 a_values=a_values,
                 percentiles=self.percentiles)
-        self.a_bin_values = np.sort(np.asarray([border.value for border in bins]))
-        self.a_bin_realizations = sorted(bins, key=lambda b: b.position)
+        bins_sorted = sorted(bins, key=lambda b: b.position)
+        self.a_bin_realizations = bins_sorted
+        self.a_bin_values = np.asarray([border.value for border in bins_sorted])
         return bins
 
     def _create_bins_from_values(
@@ -65,6 +85,7 @@ class PercentileBinner(HasSession):
                f"Histogram {_hist} (sum: {np.sum(_hist)}).\n"
                f"Sending to database under configuration ID: {self.id_metric_configuration}."))
 
+        # Translate bins to database objects
         l_bins = [BinsRealization(
                 id_metric_configuration=self.id_metric_configuration,
                 position=pos,
@@ -74,8 +95,42 @@ class PercentileBinner(HasSession):
 
         return l_bins
 
+    def bin_metric(self, metric: Column) -> Column:
+        """Assigns a bin to a given metric value.
+
+        Parameters
+        ----------
+        metric : Column
+            The respective metric value column to be binned.
+
+        Returns
+        -------
+        Column
+            A switch-case to assign a bin to the metric value. The finale bin can be extracted from the `bin`-column.
+        """
+        assert self.a_bin_values is not None, "Binning borders not computed."
+        return case(
+                    [(metric\
+                        .between( # inclusive on both borders
+                            float(self.a_bin_values[i]),
+                            float(self.a_bin_values[i + 1])), i)
+                        for i in range(len(self.a_bin_values) - 1)
+                    ],
+                    else_=len(self.a_bin_values) - 1).label("bin")
+
 class CareerLengthBinner(PercentileBinner):
+    """Binner for career length.
+    """
     def create_query_max_value(self) -> select:
+        """Query career length for all collaborators.
+        The career length is defined by the duration between an author's first and last publication in years.
+
+        Returns
+        -------
+        select
+            A sub-query to retrieve the career length for all collaborators.
+        """
+        # Select from filtered set
         sq_collaborators = self.collaborator_filter\
             .create_collaborator_source_subquery()
         return select(
@@ -94,12 +149,25 @@ class CareerLengthBinner(PercentileBinner):
 
 class CitationsBinner(PercentileBinner):
     def create_query_max_value(self) -> select:
+        """Query final citations for all collaborators.
+        The citation count is defined by the accumulated citations at the end of an author's career.
+
+        Returns
+        -------
+        select
+            A sub-query to retrieve the citation count for all collaborators.
+        """
+        # Select from filtered set
         sq_collaborators = self.collaborator_filter\
             .create_collaborator_source_subquery()
 
+        # Create subquery to retrieve the last publication date of all collaborators
         sq_collaborators_death = CitationsBinner.\
             _create_collaborator_death_query(sq_collaborators=sq_collaborators)
 
+        # Count incoming citations over all projects
+        # A `distinct`-call is omitted to count multiple incoming citations of an another publication towards more than one projects
+        # Filter citing papers by the last publication date of the collaborator to not accumulate forever
         project_collab, project_citing = alias(Project), alias(Project)
         _q = select(
             sq_collaborators_death.c.id_collaborator,
@@ -148,6 +216,14 @@ class CitationsBinner(PercentileBinner):
 
 class ProductivityBinner(PercentileBinner):
     def create_query_max_value(self) -> select:
+        """Query final productivity for all collaborators.
+        The productivity is defined by the number of publications at the end of an author's career.
+
+        Returns
+        -------
+        select
+            A sub-query to retrieve the productivity for all collaborators.
+        """
         sq_collaborators = self.collaborator_filter\
             .create_collaborator_source_subquery()
         return select(

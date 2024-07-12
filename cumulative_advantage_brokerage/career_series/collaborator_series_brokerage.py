@@ -1,6 +1,6 @@
 from collections import defaultdict
 from typing import List, Iterator, Dict, NamedTuple, Set, Union
-from sqlalchemy import select, Column, func, case, or_, and_, alias, distinct
+from sqlalchemy import select, Column, func, or_, alias
 
 import numpy as np
 
@@ -10,7 +10,6 @@ from ..constants import\
     CAREER_LENGTH_MAX, DURATION_BUFFER_AUTHOR_ACTIVE,\
     DATE_OBSERVATION_END
 from ..dbm import\
-    BinsRealization, CumAdvBrokSession,\
     CollaboratorSeriesBrokerage, HasSession,\
     Collaboration, Project,\
     TriadicClosureMotif, SimplicialTriadicClosureMotif
@@ -20,9 +19,10 @@ class _YieldBinSeries(NamedTuple):
     l_series: List[CollaboratorSeriesBrokerage]
 
 class CollaboratorSeriesBrokerageInference(HasSession):
+    """Inference of brokerage series for collaborators.
+    """
     collaborator_filter: CollaboratorFilter
     id_metric_configuration: int
-    _bins_np: np.ndarray
     _map_bin_pos_id: List[int]
     _map_collaborator_max_group: Dict[int, int]
 
@@ -31,27 +31,53 @@ class CollaboratorSeriesBrokerageInference(HasSession):
                  binner: PercentileBinner,
                  collaborator_filter: CollaboratorFilter=StandardFilter(),
                  **kwargs) -> None:
+        """Inference of brokerage series for collaborators.
+
+        Parameters
+        ----------
+        id_metric_configuration : Union[int, None]
+            `MetricConfiguration`-ID to reference the results in the database.
+        binner : PercentileBinner
+            A binner object that was used to compute the binning borders.
+        collaborator_filter : CollaboratorFilter, optional
+            Filter for the set of collaborators, by default StandardFilter()
+        """
         assert binner.a_bin_values is not None, "Binning borders not computed."
 
         self.id_metric_configuration = id_metric_configuration
         self.binner = binner
         self.collaborator_filter = collaborator_filter
 
+        # Sort bins and create a numpy array for faster binning
         bins_sorted = sorted(self.binner.a_bin_realizations, key=lambda b: b.position)
         self.bins = bins_sorted
-        self._bins_np = np.asarray(
-            [b.value for b in bins_sorted])
         self._map_bin_pos_id = np.asarray(
             [b.id for b in bins_sorted])
 
         super().__init__(*arg, **kwargs)
+        # Create a cache of the final career length of all authors
         self._init_map_collaborator_max_group()
 
     def _create_query_by_role(self, col_role: Column) -> select:
+        """Create queries to aggregate the counts of motifs for a given role per career stage.
+
+        Parameters
+        ----------
+        col_role : The column representing the role of the collaborator in the motif. Either `TriadicClosureMotif.id_collaborator_a`, `TriadicClosureMotif.id_collaborator_b`, or `TriadicClosureMotif.id_collaborator_c`.
+
+        Returns
+        -------
+        select
+            Sub-query to aggregate the counts of motifs for a given role per career stage.
+        """
+        # Filter collaborator set
         sq_coll_birth = self.collaborator_filter\
             .create_collaborator_source_subquery()
+
         sq_coll_motifs = alias(sq_coll_birth)
 
+        # Select starting point of career
+        # Outer-join is used to not filter out brokerage events for which a subset of authors is not in the filtered set.
         sq_career_start = select(
                 sq_coll_birth.c.id_collaborator.label("id_collaborator_birth"),
                 func.min(Project.timestamp).label("birth"))\
@@ -63,11 +89,12 @@ class CollaboratorSeriesBrokerageInference(HasSession):
             .group_by(sq_coll_birth.c.id_collaborator)\
             .subquery()
 
+        # Assign career stage by binning the duration between the birth and the brokerage project timestamp `t_ac`.
         sq_motifs = select(
                 TriadicClosureMotif.id.label("id_motif"),
                 sq_coll_motifs.c.id_collaborator.label("id_collaborator"),
                 TriadicClosureMotif.motif_type.label("motif_type"),
-                self._bin_metric((func.extract(
+                self.binner.bin_metric((func.extract(
                     "days",
                     Project.timestamp - sq_career_start.c.birth) / 365)))\
             .select_from(sq_coll_motifs)\
@@ -92,7 +119,7 @@ class CollaboratorSeriesBrokerageInference(HasSession):
             .subquery()
         q_vals = select(
             sq_vals.c.id_collaborator,
-            self._bin_metric(sq_vals.c.metric)
+            self.binner.bin_metric(sq_vals.c.metric)
         )
 
         self._map_collaborator_max_group = dict(
@@ -115,16 +142,6 @@ class CollaboratorSeriesBrokerageInference(HasSession):
                         for bin_pos, cnt in enumerate(a_counts)
                 ])
 
-    def _bin_metric(self, metric: Column) -> Column:
-        return case(
-                    [(metric\
-                          .between( # inclusive on both borders
-                            float(self._bins_np[i]),
-                            float(self._bins_np[i + 1])), i)
-                        for i in range(len(self._bins_np) - 1)
-                    ],
-                    else_=len(self._bins_np) - 1).label("bin")
-
     def _aggregate_role_query(self, col_role: Column) -> select:
         query = self._create_query_by_role(col_role=col_role)
         return select(
@@ -141,32 +158,17 @@ class CollaboratorSeriesBrokerageInference(HasSession):
                 query.c.motif_type,
                 query.c.bin)
 
-    @staticmethod
-    def _create_bins_from_values(
-            session: CumAdvBrokSession,
-            id_metric_configuration: int,
-            a_values=np.ndarray,
-            percentiles=np.ndarray) -> List[BinsRealization]:
-        _a_bins_np = np.quantile(a_values, q=percentiles)
-        a_bins = _a_bins_np[:-1]
-        _hist = np.histogram(a_values, bins=_a_bins_np)[0]
-
-        print((f"Inferred bins {a_bins} for {len(a_values)} collaborators.\n"
-               f"Histogram {_hist} (sum: {np.sum(_hist)}).\n"
-               f"Sending to database under configuration ID: {id_metric_configuration}."))
-
-        l_bins = [BinsRealization(
-                id_metric_configuration=id_metric_configuration,
-                position=pos,
-                value=float(age_bin)
-            ) for pos, age_bin in enumerate(a_bins)]
-        session.add_all(l_bins)
-        session.commit()
-        for _bin in l_bins:
-            session.refresh(_bin)
-        return l_bins
-
     def generate_series(self) -> Iterator[_YieldBinSeries]:
+        """Generates the brokerage frequency career stage series.
+        This function iterates over all roles and collaborator IDs to aggregate the counts of motifs for a given role per career stage.
+        It considers zero counts for a role-motif combination if no counts were found in the database.
+        This way, each collaborator will always contribute `3x2xn_stages` values, where `n_stages` is the number of stages in which the collaborator published.
+
+        Yields
+        ------
+        Iterator[_YieldBinSeries]
+            Yields a tuple of the collaborator ID and a list of `CollaboratorSeriesBrokerage` objects.
+        """
         id_collaborator, id_collaborator_curr = -1, -1
         motif_type, motif_type_curr = None, None
         _d_cache_collaborators: Dict[str, Set[int]] = defaultdict(set)
@@ -180,25 +182,40 @@ class CollaboratorSeriesBrokerageInference(HasSession):
             for id_collaborator, motif_type, bin_pos, count in\
                     self.session.execute(self._aggregate_role_query(col_role)):
                 if id_collaborator_curr == -1:
+                    # Initial configuration
                     id_collaborator_curr = id_collaborator
                     motif_type_curr = motif_type
 
+                    # Init counts array which counts the brokerage events per stage
                     a_counts = np.zeros(
                         self._map_collaborator_max_group[id_collaborator] + 1,
                         dtype=int)
+
                 if (id_collaborator != id_collaborator_curr) or (motif_type != motif_type_curr):
+                    # Change of motif type or role: yield result
                     yield self._init_yield(id_collaborator_curr, role, motif_type_curr, a_counts)
+
+                    # Remember collaborator
+                    _d_cache_collaborators[motif_type_curr].add(id_collaborator_curr)
+
+                    # Reset counts array
                     a_counts = np.zeros(
                         self._map_collaborator_max_group[id_collaborator] + 1,
                         dtype=int)
-                    _d_cache_collaborators[motif_type_curr].add(id_collaborator_curr)
+
+                    # Reset current collaborator info
                     id_collaborator_curr = id_collaborator
                     motif_type_curr = motif_type
 
                 if bin_pos < len(a_counts):
+                    # Update count
                     a_counts[bin_pos] = count
+
+            # Yield last collaborator
             yield self._init_yield(id_collaborator, role, motif_type, a_counts)
             _d_cache_collaborators[motif_type].add(id_collaborator)
+
+            # Add zero counts for other motif_types
             id_collaborator_curr = -1
             motif_type_curr = None
             a_counts = np.zeros(
