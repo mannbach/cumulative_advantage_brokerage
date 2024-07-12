@@ -37,53 +37,17 @@ def read_dataframes(folder_csv: str) -> APSDataFrames:
     except FileNotFoundError:
         print(f"Could not find '{path_citations}'. Continuing without.")
 
-    path_affiliations = os.path.join(folder_csv, "affiliations.csv")
-    print(f"Loading affiliations from '{path_affiliations}'.")
-    df_affiliations = pd.read_csv(path_affiliations, index_col="id_affiliation")
-
-    path_affil_auth = os.path.join(folder_csv, "affiliation_authorships.csv")
-    print(f"Loading affiliation_authorships from '{path_affil_auth}'.")
-    df_affil_auth = pd.read_csv(path_affil_auth, index_col=0)
-
-    path_areas = os.path.join(folder_csv, "areas.csv")
-    print(f"Loading areas from '{path_areas}'.")
-    df_areas = pd.read_csv(path_areas, index_col=0)
-
-    path_disciplines = os.path.join(folder_csv, "disciplines.csv")
-    print(f"Loading disciplines from '{path_disciplines}'.")
-    df_disciplines = pd.read_csv(path_disciplines, index_col=0)
-
-    path_facets = os.path.join(folder_csv, "facets.csv")
-    print(f"Loading facets from '{path_facets}'.")
-    df_facets = pd.read_csv(path_facets, index_col=0)
-
-    path_concepts = os.path.join(folder_csv, "concepts.csv")
-    print(f"Loading concepts from '{path_concepts}'.")
-    df_concepts = pd.read_csv(path_concepts, index_col=0)
-
-    path_pub_top = os.path.join(folder_csv, "publication_topics.csv")
-    print(f"Loading publication_topics from '{path_pub_top}'.")
-    df_pub_top = pd.read_csv(path_pub_top, index_col=0)
-
     return APSDataFrames(
         authors=df_authors, author_names=df_author_names,
         publications=df_publications, authorships=df_authorships,
-        journals=df_journals, genders=df_genders, citations=df_citations,
-        affiliations=df_affiliations, affiliation_authorships=df_affil_auth,
-        areas=df_areas, disciplines=df_disciplines, facets=df_facets,
-        concepts=df_concepts, publication_topics=df_pub_top)
-
+        journals=df_journals, genders=df_genders, citations=df_citations)
 
 def write_csv(folder_out: str, df_aps: APSDataFrames):
     for df, file in zip(
             [df_aps.genders, df_aps.authors, df_aps.author_names,
-             df_aps.publications, df_aps.authorships, df_aps.journals, df_aps.citations,
-             df_aps.affiliations, df_aps.affiliation_authorships,
-             df_aps.areas, df_aps.disciplines, df_aps.facets, df_aps.concepts, df_aps.publication_topics],
+             df_aps.publications, df_aps.authorships, df_aps.journals, df_aps.citations],
             ["genders", "authors", "author_names",
-             "publications", "authorships", "journals", "citations",
-             "affiliations", "affiliation_authorships",
-             "areas", "disciplines", "facets", "concepts", "publication_topics"]):
+             "publications", "authorships", "journals", "citations"]):
         path = os.path.join(folder_out, f"{file}.csv")
         print(f"Writing {file} to {path}.")
         df.to_csv(path)
