@@ -13,7 +13,7 @@ MAP_GENDERNQ_ID = {
 }
 
 # Preprocessing
-FILE_NAME_CSV_GENDER = "gender.csv"
+FILE_NAME_CSV_GENDER = "genders.csv"
 FILE_NAME_CSV_AUTHORS = "authors.csv"
 FILE_NAME_CSV_AUTHOR_NAMES = "author_names.csv"
 FILE_NAME_CSV_AUTHORSHIPS = "authorships.csv"
