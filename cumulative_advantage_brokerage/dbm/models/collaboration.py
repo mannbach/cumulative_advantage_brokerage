@@ -23,16 +23,4 @@ class Collaboration(Base):
         """
         return Column("id_project", ForeignKey("project.id"), index=True)
 
-    @declared_attr
-    def collaborator(cls):
-        """Define relationship to collaborator.
-        """
-        return relationship("Collaborator", back_populates="collaborations")
-
-    @declared_attr
-    def project(cls):
-        """Define relationship to project.
-        """
-        return relationship("Project", back_populates="collaborations")
-
     id_collaborator_name = Column(Integer, ForeignKey("collaborator_name.id"))

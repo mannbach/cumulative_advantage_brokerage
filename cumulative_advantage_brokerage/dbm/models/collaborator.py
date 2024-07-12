@@ -36,14 +36,6 @@ class Collaborator(Base):
         # TODO: add primaryjoin=lambda: Target.id==cls.target_id?
         return relationship("Gender")
 
-    @declared_attr
-    def collaborations(cls):
-        """The collaborations of this collaborator.
-        """
-        return relationship(
-            "Collaboration",
-            back_populates="collaborator"
-        )
     # Relationship to names (due to disambiguation)
     names = relationship(
         CollaboratorName, back_populates="collaborator")

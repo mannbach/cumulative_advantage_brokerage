@@ -12,15 +12,6 @@ class Project(Base):
     """
     __tablename__ = "project"
 
-    @declared_attr
-    def collaborations(cls):
-        """The collaborations defined by this project.
-        """
-        return relationship(
-            "Collaboration",
-            back_populates="project"
-        )
-
     timestamp = Column(DateTime)
 
     # DOI of the paper
