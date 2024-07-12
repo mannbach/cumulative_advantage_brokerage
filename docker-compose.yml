@@ -9,7 +9,7 @@ services:
     volumes:
       - volume-database:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
     env_file:
       - '${PATH_THIS_CONFIG:-secrets/sample.env}'
     healthcheck:
