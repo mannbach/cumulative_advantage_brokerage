@@ -14,6 +14,6 @@ class BaseMixin:
         return hash(self.id)
 
     def __eq__(self, __o: object) -> bool:
-        return isinstance(__o, BaseMixin) and self.id == __o.id
+        return isinstance(__o, Base) and self.id == __o.id
 
 Base = declarative_base(cls=BaseMixin)
