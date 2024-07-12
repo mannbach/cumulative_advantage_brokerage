@@ -1,7 +1,7 @@
 from typing import Dict, Any, List
 import os
 
-from ..constants.constants import ARG_CSV_INT_N_PUBLICATIONS, ARG_NOMQUAM_THRESHOLD, ARG_SEED
+from ..constants.constants import ARG_NOMQUAM_THRESHOLD, ARG_SEED
 
 def parse_config(
         list_args_required: List[str] = [], list_args_optional: List[str] = [])\
@@ -10,9 +10,6 @@ def parse_config(
 
     for arg in list_args_required:
         assert arg in config, f"Parameter '{arg}' required but not set."
-
-    if ARG_CSV_INT_N_PUBLICATIONS in list_args_optional:
-        config[ARG_CSV_INT_N_PUBLICATIONS] = int(config[ARG_CSV_INT_N_PUBLICATIONS]) if ARG_CSV_INT_N_PUBLICATIONS in config else None
 
     if (ARG_NOMQUAM_THRESHOLD in list_args_optional) or (ARG_NOMQUAM_THRESHOLD in list_args_required):
         if (ARG_NOMQUAM_THRESHOLD not in config) or (config[ARG_NOMQUAM_THRESHOLD] == "-1"):
