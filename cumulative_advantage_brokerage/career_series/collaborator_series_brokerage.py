@@ -4,6 +4,7 @@ from sqlalchemy import select, Column, func, case, or_, and_, alias, distinct
 
 import numpy as np
 
+from .binner import PercentileBinner
 from .collaborator_filter import CollaboratorFilter, StandardFilter
 from ..constants import\
     CAREER_LENGTH_MAX, DURATION_BUFFER_AUTHOR_ACTIVE,\
@@ -18,7 +19,7 @@ class _YieldBinSeries(NamedTuple):
     id_collaborator: int
     l_series: List[CollaboratorSeriesBrokerage]
 
-class CollaboratorSeriesBrokerageBinner(HasSession):
+class CollaboratorSeriesBrokerageInference(HasSession):
     collaborator_filter: CollaboratorFilter
     id_metric_configuration: int
     _bins_np: np.ndarray
@@ -27,74 +28,28 @@ class CollaboratorSeriesBrokerageBinner(HasSession):
 
     def __init__(self, *arg,
                  id_metric_configuration: Union[int, None],
-                 bins: List[BinsRealization],
+                 binner: PercentileBinner,
                  collaborator_filter: CollaboratorFilter=StandardFilter(),
                  **kwargs) -> None:
+        assert binner.a_bin_values is not None, "Binning borders not computed."
+
         self.id_metric_configuration = id_metric_configuration
-        self.bins = bins
+        self.binner = binner
         self.collaborator_filter = collaborator_filter
+
+        bins_sorted = sorted(self.binner.a_bin_realizations, key=lambda b: b.position)
+        self.bins = bins_sorted
         self._bins_np = np.asarray(
-            [b.value for b in sorted(self.bins, key=lambda b: b.position)])
+            [b.value for b in bins_sorted])
         self._map_bin_pos_id = np.asarray(
-            [b.id for b in sorted(self.bins, key=lambda b: b.position)])
+            [b.id for b in bins_sorted])
+
         super().__init__(*arg, **kwargs)
         self._init_map_collaborator_max_group()
 
-    @classmethod
-    def from_percentiles(
-            cls,
-            *args,
-            id_metric_configuration: Union[int, None],
-            percentiles: np.ndarray,
-            session: CumAdvBrokSession,
-            collaborator_filter: CollaboratorFilter=StandardFilter(),
-            **kwargs):
-        q_val_max = cls._create_query_max_value(collaborator_filter=collaborator_filter)
-
-        a_values = np.asarray(
-            [float(res[1])\
-                for res in session.execute(q_val_max)])
-
-        # @TODO: This should be replaced using PostgreSQL's own
-        # `percentile_cont/_disc`-functions
-        # (https://www.postgresql.org/docs/9.4/functions-aggregate.html).
-        # Using numpy for this task
-        # - is inefficient as the data needs to be retrieved completely
-        # - is prone to errors, as the binning works differently
-        l_bins = CollaboratorSeriesBrokerageBinner.\
-            _create_bins_from_values(
-                session=session,
-                id_metric_configuration=id_metric_configuration,
-                a_values=a_values,
-                percentiles=percentiles)
-
-        return cls(
-            *args,
-            id_metric_configuration=id_metric_configuration,
-            bins=l_bins,
-            session=session,
-            **kwargs)
-
-    @staticmethod
-    def _create_query_max_value(collaborator_filter: CollaboratorFilter) -> select:
-        sq_collaborators = collaborator_filter\
-            ._create_collaborator_source_subquery()
-        return select(
-            sq_collaborators.c.id_collaborator,
-            (func.extract(
-                "days",
-                func.max(Project.timestamp) - func.min(Project.timestamp)) / 365)\
-                    .label("metric"))\
-        .select_from(sq_collaborators)\
-        .join(Collaboration,
-              Collaboration.id_collaborator == sq_collaborators.c.id_collaborator,
-              isouter=True)\
-        .join(Project,
-              Project.id == Collaboration.id_project)\
-        .group_by(sq_collaborators.c.id_collaborator)
-
     def _create_query_by_role(self, col_role: Column) -> select:
-        sq_coll_birth = self.collaborator_filter._create_collaborator_source_subquery()
+        sq_coll_birth = self.collaborator_filter\
+            .create_collaborator_source_subquery()
         sq_coll_motifs = alias(sq_coll_birth)
 
         sq_career_start = select(
@@ -132,8 +87,8 @@ class CollaboratorSeriesBrokerageBinner(HasSession):
         return sq_motifs
 
     def _init_map_collaborator_max_group(self):
-        sq_vals = CollaboratorSeriesBrokerageBinner\
-            ._create_query_max_value(self.collaborator_filter)\
+        sq_vals = self.binner\
+            .create_query_max_value()\
             .subquery()
         q_vals = select(
             sq_vals.c.id_collaborator,
@@ -200,10 +155,10 @@ class CollaboratorSeriesBrokerageBinner(HasSession):
                f"Histogram {_hist} (sum: {np.sum(_hist)}).\n"
                f"Sending to database under configuration ID: {id_metric_configuration}."))
 
-        l_bins = [session.class_map.BinsRealization(
+        l_bins = [BinsRealization(
                 id_metric_configuration=id_metric_configuration,
                 position=pos,
-                value=age_bin
+                value=float(age_bin)
             ) for pos, age_bin in enumerate(a_bins)]
         session.add_all(l_bins)
         session.commit()
@@ -211,7 +166,7 @@ class CollaboratorSeriesBrokerageBinner(HasSession):
             session.refresh(_bin)
         return l_bins
 
-    def generate_binning(self) -> Iterator[_YieldBinSeries]:
+    def generate_series(self) -> Iterator[_YieldBinSeries]:
         id_collaborator, id_collaborator_curr = -1, -1
         motif_type, motif_type_curr = None, None
         _d_cache_collaborators: Dict[str, Set[int]] = defaultdict(set)

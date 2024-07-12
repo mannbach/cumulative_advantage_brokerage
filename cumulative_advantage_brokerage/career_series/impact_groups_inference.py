@@ -1,95 +1,51 @@
 from typing import List
-from sqlalchemy import select, func, and_, alias, distinct
+from sqlalchemy import select, case, Column
+
+import numpy as np
 
 from ..dbm import\
     ImpactGroup, CumAdvBrokSession, HasSession,\
     Collaboration, Project, Citation
 from .collaborator_filter import CollaboratorFilter, StandardFilter
+from .binner import PercentileBinner
 
 class ImpactGroupsInference(HasSession):
-    collaborator_filter: CollaboratorFilter
+    binner: PercentileBinner
+    id_metric_configuration: int
 
     def __init__(
             self, *arg,
             session: CumAdvBrokSession,
-            collaborator_filter: CollaboratorFilter=StandardFilter(), **kwargs) -> None:
+            binner: PercentileBinner,
+            id_metric_configuration: int, **kwargs) -> None:
         super().__init__(*arg, session=session, **kwargs)
-        self.collaborator_filter = collaborator_filter
+        self.binner = binner
+        self.id_metric_configuration = id_metric_configuration
 
     def compute_impact_groups(self) -> List[ImpactGroup]:
-        q = self._create_query_max_value()
+        assert self.binner.a_bin_values is not None, "Binning borders not computed."
+
+        q_final_vals = self.binner.create_query_max_value().subquery()
+        q_vals = select(
+            q_final_vals.c.id_collaborator,
+            self._bin_metric(q_final_vals.c.metric)
+        )
         l_impact_groups = []
-        for id_collaborator, metric in self.session.execute(q):
+        for id_collaborator, q_m in self.session.execute(q_vals):
             l_impact_groups.append(
-                ImpactGroup(metric=metric, id_collaborator=id_collaborator))
+                ImpactGroup(value=q_m,
+                            id_collaborator=id_collaborator,
+                            id_metric_configuration=self.id_metric_configuration))
+        self.session.commit_list(l=l_impact_groups)
         return l_impact_groups
 
-    def _create_query_max_value(self) -> select:
-        raise NotImplementedError
-
-class CitationsImpactGroupInference(ImpactGroupsInference):
-    def _create_query_max_value(self) -> select:
-        sq_collaborators = self.collaborator_filter\
-            .create_collaborator_source_subquery()
-
-        sq_collaborators_death = CitationsImpactGroupInference.\
-            _create_collaborator_death_query(sq_collaborators=sq_collaborators)
-
-        project_collab, project_citing = alias(Project), alias(Project)
-        _q = select(
-            sq_collaborators_death.c.id_collaborator,
-            func.count(project_citing.c.id)\
-                .label("metric"))\
-        .select_from(sq_collaborators_death)\
-        .join(Collaboration,
-              Collaboration.id_collaborator == sq_collaborators_death.c.id_collaborator,
-              isouter=True)\
-        .join(project_collab,
-              project_collab.c.id == Collaboration.id_project)\
-        .join(Citation,
-              Citation.id_project_cited == project_collab.c.id,
-              isouter=True
-        )\
-        .join(project_citing,
-              and_(project_citing.c.id == Citation.id_project_citing,
-                   project_citing.c.timestamp <= sq_collaborators_death.c.death),
-              isouter=True
-        )\
-        .group_by(sq_collaborators_death.c.id_collaborator)
-
-        return _q
-
-    @staticmethod
-    def _create_citations_per_paper_subquery() -> select:
-        return select(
-            Citation.id_project_cited.label("id_project_cited"),
-            func.count(Citation.id_project_citing).label("citations"))\
-            .select_from(Citation)\
-            .group_by(Citation.id_project_cited)\
-            .subquery()
-
-
-    @staticmethod
-    def _create_collaborator_death_query(sq_collaborators: select) -> select:
-        return select(
-            sq_collaborators.c.id_collaborator,
-            func.max(Project.timestamp).label("death"))\
-            .select_from(sq_collaborators)\
-            .join(Collaboration,
-                  Collaboration.id_collaborator == sq_collaborators.c.id_collaborator)\
-            .join(Project, Project.id == Collaboration.id_project)\
-            .group_by(sq_collaborators.c.id_collaborator)\
-            .subquery()
-
-class ProductivityImpactGroupInference(ImpactGroupsInference):
-    def _create_query_max_value(self) -> select:
-        sq_collaborators = self.collaborator_filter\
-            .create_collaborator_source_subquery()
-        return select(
-                sq_collaborators.c.id_collaborator,
-                (func.count(distinct(Collaboration.id_project))).label("metric"))\
-            .select_from(sq_collaborators)\
-            .join(Collaboration,
-                Collaboration.id_collaborator == sq_collaborators.c.id_collaborator,
-                isouter=True)\
-            .group_by(sq_collaborators.c.id_collaborator)
+    def _bin_metric(self, metric: Column) -> Column:
+        assert self.binner.a_bin_values is not None, "Binning borders not computed."
+        return case(
+                    [(metric\
+                          .between( # inclusive on both borders
+                            float(self.binner.a_bin_values[i]),
+                            float(self.binner.a_bin_values[i + 1])), i)
+                        for i in range(len(self.binner.a_bin_values) - 1)
+                    ],
+                    else_=len(self.binner.a_bin_values) - 1).label("bin")
