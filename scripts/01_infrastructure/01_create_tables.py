@@ -9,13 +9,29 @@ from cumulative_advantage_brokerage.dbm import\
     PostgreSQLEngine,\
     Base, Collaboration, Gender,\
     Collaborator, Project,\
-    CollaboratorName, Citation
+    CollaboratorName, Citation,\
+    MetricConfiguration, BinsRealization,\
+    MetricCollaboratorSeriesBrokerageFrequencyComparison,\
+    MetricCollaboratorSeriesBrokerageRateComparison,\
+    BaseTriadicClosureMotif, SimplicialBaseTriadicClosureMotif,\
+    BrokerMotif, SimplicialBrokerMotif,\
+    InitiationLinkMotif, SimplicialInitiationLinkMotif,\
+    TriadicClosureMotif, SimplicialTriadicClosureMotif
 
 def main():
     """Create tables."""
     config = parse_config([ARG_POSTGRES_DB_APS])
 
-    tables_base = [Gender, CollaboratorName, Collaboration, Project, Collaborator, Citation]
+    tables_base = [
+        Gender, CollaboratorName, Collaboration, Project,
+        Collaborator, Citation,
+        MetricConfiguration, BinsRealization,
+        MetricCollaboratorSeriesBrokerageFrequencyComparison,
+        MetricCollaboratorSeriesBrokerageRateComparison,
+        BaseTriadicClosureMotif, SimplicialBaseTriadicClosureMotif,
+        BrokerMotif, SimplicialBrokerMotif,
+        InitiationLinkMotif, SimplicialInitiationLinkMotif,
+        TriadicClosureMotif, SimplicialTriadicClosureMotif]
     print(f"Creating tables for {config[ARG_POSTGRES_DB_APS]}.")
     engine_test = PostgreSQLEngine.from_config(
         config, key_dbname=ARG_POSTGRES_DB_APS)
