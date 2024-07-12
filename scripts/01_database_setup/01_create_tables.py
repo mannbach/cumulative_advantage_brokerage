@@ -16,7 +16,8 @@ from cumulative_advantage_brokerage.dbm import\
     BaseTriadicClosureMotif, SimplicialBaseTriadicClosureMotif,\
     BrokerMotif, SimplicialBrokerMotif,\
     InitiationLinkMotif, SimplicialInitiationLinkMotif,\
-    TriadicClosureMotif, SimplicialTriadicClosureMotif
+    TriadicClosureMotif, SimplicialTriadicClosureMotif,\
+    ImpactGroup
 
 def main():
     """Create tables."""
@@ -31,7 +32,8 @@ def main():
         BaseTriadicClosureMotif, SimplicialBaseTriadicClosureMotif,
         BrokerMotif, SimplicialBrokerMotif,
         InitiationLinkMotif, SimplicialInitiationLinkMotif,
-        TriadicClosureMotif, SimplicialTriadicClosureMotif]
+        TriadicClosureMotif, SimplicialTriadicClosureMotif,
+        ImpactGroup]
     print(f"Creating tables for {config[ARG_POSTGRES_DB_APS]}.")
     engine_test = PostgreSQLEngine.from_config(
         config, key_dbname=ARG_POSTGRES_DB_APS)

@@ -20,6 +20,7 @@ from .models.triadic_closure_motifs import\
     InitiationLinkMotif, SimplicialInitiationLinkMotif,\
     TriadicClosureMotif, SimplicialTriadicClosureMotif
 from .models.bins_realization import BinsRealization
+from .models.impact_group import ImpactGroup
 
 from .collection import APSCollection
 from .integrator import APSIntegrator
