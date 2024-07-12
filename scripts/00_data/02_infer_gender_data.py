@@ -20,7 +20,7 @@ def main():
 
     dfs = inf.infer_gender(dfs)
 
-    write_csv(folder_out=config[ARG_TRANSF_APS_CSV_FOLDER], dfs=dfs)
+    write_csv(folder_out=config[ARG_TRANSF_APS_CSV_FOLDER], df_aps=dfs)
 
 if __name__ == "__main__":
     main()
