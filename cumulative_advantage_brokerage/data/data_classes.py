@@ -56,10 +56,3 @@ class APSDataFrames:
     authorships: pd.DataFrame
     journals: pd.DataFrame
     citations: pd.DataFrame
-    affiliations: pd.DataFrame
-    affiliation_authorships: pd.DataFrame
-    areas: pd.DataFrame
-    disciplines: pd.DataFrame
-    facets: pd.DataFrame
-    concepts: pd.DataFrame
-    publication_topics: pd.DataFrame
