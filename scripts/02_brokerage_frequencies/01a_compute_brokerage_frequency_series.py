@@ -12,10 +12,11 @@ def main():
 
     with CumAdvBrokSession(engine) as session:
         d_args_config = {
+            "metric": STR_CAREER_LENGTH,
+            "binner": CareerLengthBinner.__name__,
             "binning": "quantile",
             "bins_quantiles": CS_BINS_PERCENTILES}
 
-        d_args_config["metric"] = STR_CAREER_LENGTH
         m_config = MetricConfiguration(
             args=d_args_config)
         print(f"Adding new configuration with args: {d_args_config}")

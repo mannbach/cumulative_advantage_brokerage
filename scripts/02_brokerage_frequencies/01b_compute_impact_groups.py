@@ -19,6 +19,8 @@ def main():
         print(f"Working on metric '{metric}' using binner '{Binner.__name__}'")
         with CumAdvBrokSession(engine) as session:
             d_args_config = {
+                "metric": metric,
+                "binner": Binner.__name__,
                 "binning": "quantile",
                 "bins_quantiles": CS_BINS_PERCENTILES}
 
