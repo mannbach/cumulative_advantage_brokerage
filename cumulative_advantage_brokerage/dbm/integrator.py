@@ -9,18 +9,16 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from .collaboration import Collaboration
-from .collaborator import Collaborator
-from .collaborator_name import CollaboratorName
 from .collection import APSCollection
-from .journal import Journal
-from .project import Project
-from .gender import Gender
-from .citation import Citation
-from .definitions import GENDER_UNKNOWN, GENDER_FEMALE, GENDER_MALE
-from .. import Integrator
+from .models.collaboration import Collaboration
+from .models.collaborator import Collaborator
+from .models.collaborator_name import CollaboratorName
+from .models.project import Project
+from .models.gender import Gender,\
+    GENDER_UNKNOWN, GENDER_FEMALE, GENDER_MALE
+from .models.citation import Citation
 
-class APSIntegrator(Integrator):
+class APSIntegrator:
     """Performs the integration of the APS dataset.
     See `APSIntegrator.integrate_data` for details.
     """
@@ -30,22 +28,14 @@ class APSIntegrator(Integrator):
     _file_author_names: str
     _file_authorships: str
     _file_publications: str
-    _file_journals: str
     _file_citations: str
 
     _s_id_collaborators: Set[int]
     _s_id_projects: Set[int]
-    _s_id_journals: Set[int]
 
     _d_map_name_collaborator: Dict[int, int]
 
     collection: Union[APSCollection, None] = None
-
-    MAP_GENDER = {
-        "unknown": GENDER_UNKNOWN,
-        "female": GENDER_FEMALE,
-        "male": GENDER_MALE,
-    }
 
     def __init__(
             self,
@@ -56,29 +46,27 @@ class APSIntegrator(Integrator):
             file_author_names: str,
             file_authorships: str,
             file_publications: str,
-            file_journals: str,
             file_citations: str,
             path_log: Union[str, None] = None) -> None:
-        super().__init__(engine, path_log)
+        self.engine = engine
+        self.path_log = path_log
         self._folder_aps_csv = folder_csv
         self._file_gender = file_gender
         self._file_authors = file_authors
         self._file_author_names = file_author_names
         self._file_authorships = file_authorships
         self._file_publications = file_publications
-        self._file_journals = file_journals
         self._file_citations = file_citations
 
         self._s_id_collaborators = set()
         self._s_id_projects = set()
-        self._s_id_journals = set()
 
         self._d_map_name_collaborator = dict()
 
         self.collection = APSCollection() # Initialize empty
 
     def integrate_genders(self) -> List[Gender]:
-        genders = list(APSIntegrator.MAP_GENDER.values())
+        genders = [GENDER_UNKNOWN, GENDER_FEMALE, GENDER_MALE]
         self.collection.genders = genders
         return genders
 
@@ -141,7 +129,7 @@ class APSIntegrator(Integrator):
                 if int(row["id_author_name"]) not in self._d_map_name_collaborator:
                     continue
                 collab = Collaboration(
-                    id=int(row[""]),
+                    id=int(row["id_authorship"]),
                     id_collaborator=self._d_map_name_collaborator[int(row["id_author_name"])],
                     id_project=int(row["id_publication"]),
                     id_collaborator_name=int(row["id_author_name"]))
@@ -165,42 +153,15 @@ class APSIntegrator(Integrator):
                     continue
                 project = Project(
                     id=int(row["id_publication"]),
-                    id_journal=int(row["id_journal"]),
                     timestamp=datetime.fromisoformat(row["timestamp"]),
                     doi=row["doi"])
-                self._s_id_journals.add(project.id_journal)
                 self.collection.projects.append(project)
 
         return self.collection.projects
 
-    def integrate_journals(self) -> List[Journal]:
-        assert self.collection.projects is not None
-
-        path_journals = os.path.join(self._folder_aps_csv, self._file_journals)
-        print(f"Reading journals from {path_journals}")
-
-        self.collection.journals = []
-
-        with open(path_journals, "r", encoding="utf-8") as file:
-            reader = DictReader(file)
-            for row in reader:
-                if not int(row["id_journal"]) in self._s_id_journals:
-                    continue
-                journal = Journal(
-                    id=int(row["id_journal"]),
-                    code=row["code"],
-                    short=row["short"],
-                    name=row["name"],
-                    issue=row["issue"],
-                    volume=int(row["volume"])
-                )
-                self.collection.journals.append(journal)
-
-        return self.collection.journals
-
     def integrate_citations(self) -> List[Citation]:
         if len(self._s_id_projects) == 0:
-            print(f"Load project ids")
+            print("Load project ids")
             self._load_id_projects()
 
         path_citations = os.path.join(self._folder_aps_csv, self._file_citations)
@@ -230,13 +191,11 @@ class APSIntegrator(Integrator):
         collaborator_names = self.integrate_collaborator_names()
         collaborations = self.integrate_collaborations()
         projects = self.integrate_projects()
-        journals = self.integrate_journals()
         citations = self.integrate_citations()
 
         print("Storing data in database.")
         with Session(self.engine) as session:
             session.add_all(genders)
-            session.add_all(journals)
             session.commit()
             session.add_all(collaborators)
             session.commit()

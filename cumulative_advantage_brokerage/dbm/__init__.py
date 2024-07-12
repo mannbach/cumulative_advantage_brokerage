@@ -4,7 +4,8 @@ from .models.base_mixin import Base
 from .models.citation import Citation
 from .models.collaboration import Collaboration
 from .models.collaborator import Collaborator
-from .models.gender import Gender
+from .models.gender import Gender,\
+    GENDER_UNKNOWN, GENDER_MALE, GENDER_FEMALE
 from .models.project import Project
 from .models.collaborator_name import CollaboratorName
 from .models.metric_cs_bf_comparison import\
@@ -20,4 +21,7 @@ from .models.triadic_closure_motifs import\
     TriadicClosureMotif, SimplicialTriadicClosureMotif
 from .models.bins_realization import BinsRealization
 
+from .collection import APSCollection
+from .integrator import APSIntegrator
+from .has_session import HasSession
 from .postgresql_engine import PostgreSQLEngine
