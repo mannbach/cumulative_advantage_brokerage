@@ -3,25 +3,29 @@ import os
 import pandas as pd
 
 from .data_classes import APSDataFrames
+from ..constants import\
+    FILE_NAME_CSV_GENDER, FILE_NAME_CSV_AUTHORS,\
+    FILE_NAME_CSV_AUTHOR_NAMES, FILE_NAME_CSV_AUTHORSHIPS,\
+    FILE_NAME_CSV_PUBLICATIONS, FILE_NAME_CSV_CITATIONS
 
 def read_dataframes(folder_csv: str) -> APSDataFrames:
-    path_genders = os.path.join(folder_csv, "genders.csv")
+    path_genders = os.path.join(folder_csv, FILE_NAME_CSV_GENDER)
     print(f"Loading genders from '{path_genders}'.")
     df_genders = pd.read_csv(path_genders, index_col="id_gender")
 
-    path_authors = os.path.join(folder_csv, "authors.csv")
+    path_authors = os.path.join(folder_csv, FILE_NAME_CSV_AUTHORS)
     print(f"Loading authors from '{path_authors}'.")
     df_authors = pd.read_csv(path_authors, index_col="id_author")
 
-    path_author_names = os.path.join(folder_csv, "author_names.csv")
+    path_author_names = os.path.join(folder_csv, FILE_NAME_CSV_AUTHOR_NAMES)
     print(f"Loading author_names from '{path_author_names}'.")
     df_author_names = pd.read_csv(path_author_names, index_col=0)
 
-    path_publications = os.path.join(folder_csv, "publications.csv")
+    path_publications = os.path.join(folder_csv, FILE_NAME_CSV_PUBLICATIONS)
     print(f"Loading publications from '{path_publications}'.")
     df_publications = pd.read_csv(path_publications, index_col="id_publication", parse_dates=["timestamp"])
 
-    path_authorships = os.path.join(folder_csv, "authorships.csv")
+    path_authorships = os.path.join(folder_csv, FILE_NAME_CSV_AUTHORSHIPS)
     print(f"Loading authorships from '{path_authorships}'.")
     df_authorships = pd.read_csv(path_authorships, index_col=0)
 
@@ -29,7 +33,7 @@ def read_dataframes(folder_csv: str) -> APSDataFrames:
     print(f"Loading journals from '{path_journals}'.")
     df_journals = pd.read_csv(path_journals, index_col="id_journal")
 
-    path_citations = os.path.join(folder_csv, "citations.csv")
+    path_citations = os.path.join(folder_csv, FILE_NAME_CSV_CITATIONS)
     print(f"Loading citations from '{path_citations}'.")
     df_citations = None
     try:
