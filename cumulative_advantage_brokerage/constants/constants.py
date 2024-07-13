@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import matplotlib.pyplot as plt
 
 ID_GENDER_UNKNOWN = 0
 ID_GENDER_FEMALE = 1
@@ -48,6 +49,14 @@ N_RESAMPLES_DEFAULT = 5000
 STR_BF_CMP = "bf-comparison"
 STR_BR_CMP = "br-comparison"
 STR_BR_COR = "br-correlation"
+
+# Plots
+WIDTH_FIG_PAPER = 500.484 / 72
+HEIGHT_FIG_PAPER = WIDTH_FIG_PAPER / 9 * 6
+SIZE_FIG_PAPER = (WIDTH_FIG_PAPER, HEIGHT_FIG_PAPER)
+CM_LONGEVITY = plt.cm.get_cmap("Blues")
+CM_PRODUCTIVITY = plt.cm.get_cmap("Oranges")
+CM_CITATION = plt.cm.get_cmap("Greens")
 
 # ARG NAMES
 ARG_PATH_CONTAINER_DATA = "PATH_CONTAINER_DATA"
