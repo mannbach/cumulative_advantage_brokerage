@@ -110,13 +110,12 @@ class PercentileBinner(HasSession):
         """
         assert self.a_bin_values is not None, "Binning borders not computed."
         return case(
-                    [(metric\
-                        .between( # inclusive on both borders
-                            float(self.a_bin_values[i]),
-                            float(self.a_bin_values[i + 1])), i)
-                        for i in range(len(self.a_bin_values) - 1)
-                    ],
-                    else_=len(self.a_bin_values) - 1).label("bin")
+            [(and_(
+                metric >= float(self.a_bin_values[i]),
+                metric < float(self.a_bin_values[i + 1])), i)
+                    for i in range(len(self.a_bin_values) - 1)
+            ],
+            else_=len(self.a_bin_values) - 1).label("bin")
 
 class CareerLengthBinner(PercentileBinner):
     """Binner for career length.
