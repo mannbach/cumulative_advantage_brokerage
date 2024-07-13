@@ -54,9 +54,13 @@ STR_BR_COR = "br-correlation"
 WIDTH_FIG_PAPER = 500.484 / 72
 HEIGHT_FIG_PAPER = WIDTH_FIG_PAPER / 9 * 6
 SIZE_FIG_PAPER = (WIDTH_FIG_PAPER, HEIGHT_FIG_PAPER)
-CM_LONGEVITY = plt.cm.get_cmap("Blues")
+CM_CAREER_LENGTH = plt.cm.get_cmap("Blues")
 CM_PRODUCTIVITY = plt.cm.get_cmap("Oranges")
 CM_CITATION = plt.cm.get_cmap("Greens")
+OFFSET_MARKERS = .15
+COLOR_BROK = "#574e91"
+OFFSET_HET_HIST = (0, 1, 0)
+XLOGSCALE_HET_HIST = (False, True, True)
 
 # ARG NAMES
 ARG_PATH_CONTAINER_DATA = "PATH_CONTAINER_DATA"
