@@ -47,7 +47,7 @@ def main():
                 l_hist = []
         session.commit_list(l=l_hist)
 
-    print(f"Done.\nCareer series metric ID: {m_config.id}")
+        print(f"Done.\nCareer series metric ID: {m_config.id}")
 
 if __name__ == "__main__":
     main()
