@@ -9,13 +9,13 @@ from sqlalchemy.orm import Query
 
 from .grouper import Grouper, GrouperDummy
 from .statistical_tests import StatisticalTest
-from ..constants import N_RESAMPLES_DEFAULT
+from ..constants import N_RESAMPLES_DEFAULT, N_STAGES
 from ..dbm import\
     MetricCollaboratorSeriesBrokerageFrequencyComparison,\
     MetricCollaboratorSeriesBrokerageRateComparison,\
     CollaboratorSeriesBrokerage, BinsRealization,\
     Collaboration, Project, Gender, Collaborator,\
-    HasSession, CumAdvBrokSession
+    HasSession, CumAdvBrokSession, ImpactGroup
 
 class CollaboratorSeriesBrokerageComparison(HasSession):
     _df_cs_cached: Union[pd.DataFrame, None]
@@ -41,7 +41,7 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
         self.id_metric_config_impact_group = id_metric_config_impact_group
         self.statistical_test = statistical_test
         self.n_resamples = n_resamples
-        self.grouper = grouper if grouper is not None else GrouperDummy()
+        self.grouper = grouper if grouper is not None else GrouperDummy
         self._df_cs_cached = None
 
     def init_cached_data(self):
@@ -104,8 +104,6 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
     def _get_query_base(self) -> select:
         sq_stage_max_career = self._get_query_stage_max(
             self.id_metric_config_career)
-        sq_stage_max_impact = self._get_query_stage_max(
-            self.id_metric_config_impact_group)
 
         sq_project_decade = select(
                 Collaboration.id_collaborator,
@@ -121,7 +119,7 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
             Gender.gender,
             BinsRealization.position.label("stage"),
             sq_stage_max_career.c.stage_max.label("stage_max_career"),
-            sq_stage_max_impact.c.stage_max.label("stage_max_impact"),
+            ImpactGroup.value.label("stage_max_impact"),
             sq_project_decade.c.decade_birth.label("decade_birth"),
             CollaboratorSeriesBrokerage.motif_type,
             CollaboratorSeriesBrokerage.role,
@@ -138,7 +136,10 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
             sq_stage_max_career, sq_stage_max_career.c.id_collaborator == CollaboratorSeriesBrokerage.id_collaborator
         )\
         .join(
-            sq_stage_max_impact, sq_stage_max_impact.c.id_collaborator == CollaboratorSeriesBrokerage.id_collaborator
+            ImpactGroup,
+            and_(
+                ImpactGroup.id_collaborator == CollaboratorSeriesBrokerage.id_collaborator,
+                ImpactGroup.id_metric_configuration == self.id_metric_config_impact_group)
         )\
         .join(
             sq_project_decade, sq_project_decade.c.id_collaborator == CollaboratorSeriesBrokerage.id_collaborator
@@ -186,9 +187,17 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
     def compute_comparison(
             self, stage_curr: int, stage_max_curr: int, stage_max_next: int,
             verbose: bool = True, grouping_key: Union[None, str] = None, **kwargs) -> MetricCollaboratorSeriesBrokerageFrequencyComparison:
-        _, a_vals_stage_max_curr = self.get_values(stage_curr=stage_curr, stage_max=stage_max_curr, verbose=verbose, grouping_key=grouping_key)
+        _, a_vals_stage_max_curr = self.get_values(
+            stage_curr=stage_curr,
+            stage_max=stage_max_curr,
+            verbose=verbose,
+            grouping_key=grouping_key)
         self._log(f"len(m)={len(a_vals_stage_max_curr)}")
-        _, a_vals_stage_max_next = self.get_values(stage_curr=stage_curr, stage_max=stage_max_next, verbose=verbose, grouping_key=grouping_key)
+        _, a_vals_stage_max_next = self.get_values(
+            stage_curr=stage_curr,
+            stage_max=stage_max_next,
+            verbose=verbose,
+            grouping_key=grouping_key)
         self._log(f"len(m+1)={len(a_vals_stage_max_next)}")
 
         if len(a_vals_stage_max_curr) == 0 or len(a_vals_stage_max_next) == 0:
@@ -202,28 +211,28 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
             max_stage_curr=stage_max_curr,
             max_stage_next=stage_max_next,
             grouping_key=grouping_key,
-            test_statistic=t,
-            p_value=p,
+            test_statistic=float(t),
+            p_value=float(p),
             # ci_low=-np.inf,
             # ci_high=np.inf,
-            ci_low=ci.low if ci is not None else None,
-            ci_high=ci.high if ci is not None else None,
+            ci_low=float(ci.low) if ci is not None else None,
+            ci_high=float(ci.high) if ci is not None else None,
             n_x=len(a_vals_stage_max_next),
-            mu_x=np.mean(a_vals_stage_max_next),
-            std_x=np.std(a_vals_stage_max_next),
+            mu_x=float(np.mean(a_vals_stage_max_next)),
+            std_x=float(np.std(a_vals_stage_max_next)),
             n_y=len(a_vals_stage_max_curr),
-            mu_y=np.mean(a_vals_stage_max_curr),
-            std_y=np.std(a_vals_stage_max_curr),
+            mu_y=float(np.mean(a_vals_stage_max_curr)),
+            std_y=float(np.std(a_vals_stage_max_curr)),
         )
 
-    def generate_comparisons(self, n_stages: int, verbose: bool = True, **kwargs)\
+    def generate_comparisons(self, verbose: bool = True, **kwargs)\
         -> Generator[MetricCollaboratorSeriesBrokerageFrequencyComparison, None, None]:
         self._log(
             msg=f"Starting comparison with grouper {self.grouper.name}",
             verbose=verbose)
-        for stage in range(n_stages - 1):
+        for stage in range(N_STAGES - 1):
             self._log(msg=f"Stage s={stage}", verbose=verbose)
-            for stage_max_curr in range(n_stages - 1):
+            for stage_max_curr in range(N_STAGES - 1):
                 stage_max_next = stage_max_curr + 1
                 self._log(
                     msg=f"\tMax stages m={stage_max_curr}, m+1={stage_max_next}",
@@ -334,28 +343,28 @@ class CollaboratorSeriesRateStageComparison(CollaboratorSeriesBrokerageCompariso
             stage_curr=stage_curr,
             stage_max=stage_max,
             grouping_key=grouping_key,
-            test_statistic=t,
-            p_value=p,
-            ci_low=ci.low if ci is not None else None,
-            ci_high=ci.high if ci is not None else None,
+            test_statistic=float(t),
+            p_value=float(p),
+            ci_low=float(ci.low) if ci is not None else None,
+            ci_high=float(ci.high) if ci is not None else None,
             n_x=len(a_vals_stage_next),
-            mu_x=np.mean(a_vals_stage_next),
-            std_x=np.std(a_vals_stage_next),
+            mu_x=float(np.mean(a_vals_stage_next)),
+            std_x=float(np.std(a_vals_stage_next)),
             n_y=len(a_vals_stage_curr),
-            mu_y=np.mean(a_vals_stage_curr),
-            std_y=np.std(a_vals_stage_curr),
+            mu_y=float(np.mean(a_vals_stage_curr)),
+            std_y=float(np.std(a_vals_stage_curr)),
         )
 
-    def generate_comparisons(self, n_stages: int, verbose: bool = True, **kwargs) \
+    def generate_comparisons(self, verbose: bool = True, **kwargs) \
             -> Generator[MetricCollaboratorSeriesBrokerageFrequencyComparison, None, None]:
         self._log(
             msg=f"Starting comparison with grouper {self.grouper.name}",
             verbose=verbose)
-        for stage_max in range(n_stages):
+        for stage_max in range(N_STAGES):
             self._log(
                 msg=f"\tMax stage m={stage_max}",
                 verbose=verbose)
-            for stage in range(n_stages - 2):
+            for stage in range(N_STAGES - 2):
                 stage_next = stage + 1
                 self._log(msg=f"Stage s={stage}, next stage {stage_next}", verbose=verbose)
                 result = self.compute_comparison(stage_curr=stage, stage_next=stage_next, stage_max=stage_max, verbose=verbose, **kwargs)
@@ -431,14 +440,14 @@ class CollaboratorSeriesRateStageCorrelation(CollaboratorSeriesRateStageComparis
             stage_curr=stage_curr,
             stage_max=stage_max,
             grouping_key=grouping_key,
-            test_statistic=t,
-            p_value=p,
-            ci_low=ci.low if ci is not None else None,
-            ci_high=ci.high if ci is not None else None,
+            test_statistic=float(t),
+            p_value=float(p),
+            ci_low=float(ci.low) if ci is not None else None,
+            ci_high=float(ci.high) if ci is not None else None,
             n_x=len(a_vals_stage_next),
-            mu_x=np.mean(a_vals_stage_next),
-            std_x=np.std(a_vals_stage_next),
+            mu_x=float(np.mean(a_vals_stage_next)),
+            std_x=float(np.std(a_vals_stage_next)),
             n_y=len(a_vals_stage_curr),
-            mu_y=np.mean(a_vals_stage_curr),
-            std_y=np.std(a_vals_stage_curr),
+            mu_y=float(np.mean(a_vals_stage_curr)),
+            std_y=float(np.std(a_vals_stage_curr)),
         )
