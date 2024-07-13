@@ -45,6 +45,9 @@ N_STAGES = len(CS_BINS_PERCENTILES) - 1
 
 # Comparisons
 N_RESAMPLES_DEFAULT = 5000
+STR_BF_CMP = "bf-comparison"
+STR_BR_CMP = "br-comparison"
+STR_BR_COR = "br-correlation"
 
 # ARG NAMES
 ARG_PATH_CONTAINER_DATA = "PATH_CONTAINER_DATA"
