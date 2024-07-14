@@ -66,10 +66,6 @@ def main():
                 id_metric = init_metric_id(str_metric, session)
             l_bins_stages.append(get_bin_values_by_id(session, id_metric))
             print(f"\tBins: {l_bins_stages[-1]}")
-            # if str_metric == STR_CITATIONS:
-            #     print("Skipping citations for now.")
-            #     l_l_vals.append(np.ones(138124))
-            #     continue
 
             print("Getting max values...")
             binner = Binner(
