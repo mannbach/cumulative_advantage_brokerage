@@ -29,7 +29,24 @@ Some important variables include
 
 ## Execution steps
 ### Building and running the docker image
+After adjusting the [configuration](#configuration), build the docker image by running
+```bash
+docker compose --env-file secrets/sample.env build
+```
+replacing `secrets/sample.env` to the path to your custom `.env`-file in case you created a new on (from here on, we will continue to use `secrets/sample.env`).
+Start the container by executing
+```bash
+docker compose --env-file secrets/sample.env up -d
+```
+with the `-d` flag signaling docker to run the containers in a background process, allowing you to continue using the same terminal.
+
 ### Running the code
+All executable, high-level scripts are located in the `scripts/` folder.
+To execute a script at location `<script.py>` and its arguments `<arguments>`, simply run (see below for examples):
+```bash
+docker exec -t cumulative_advantage_brokerage python <script.py> <arguments>
+```
+The `-t` forwards the output of the container immediately to your local terminal.
 
 ## Project structure
 To quickly navigate the code base, we provide a brief description of the project tree
