@@ -1,2 +1,3 @@
 from .visuals import draw_zooming_box, draw_zooming_box
 from .heterogeneity import plot_heterogeneity, N_BINS_HIST
+from .brokerage_frequency_comparison import plot_brokerage_frequency_comparison, STAGE_MAX_DIFF_HIGH, STAGE_MAX_DIFF_LOW, STAGE_EXAMPLE
