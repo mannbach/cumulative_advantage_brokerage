@@ -25,8 +25,7 @@ def plot_quantiles(
         bins_stages: np.ndarray,
         s_vals: np.ndarray,
         color_map,
-        offset: float = 0.
-):
+        offset: float = 0.):
     for i, border in enumerate(bins_stages[1:]):
         ax.axvspan(
             bins_stages[i] + offset, border + offset, color=color_map((i + 1)/N_STAGES), alpha=.3
