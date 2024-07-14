@@ -115,6 +115,7 @@ def main():
                     assert id_impact_group is not None, "No impact group ID found."
                 m_config_cmp = MetricConfiguration(
                     args={
+                        "type": CMP_OPTIONS_CLS[comparison].__name__,
                         "comparison": comparison,
                         "id_metric_config_career": id_metric_career,
                         "id_metric_config_impact": id_impact_group,

@@ -19,6 +19,7 @@ def main():
         print(f"Working on metric '{metric}' using binner '{Binner.__name__}'")
         with CumAdvBrokSession(engine) as session:
             d_args_config = {
+                "type": ImpactGroupsInference.__name__,
                 "metric": metric,
                 "binner": Binner.__name__,
                 "binning": "quantile",

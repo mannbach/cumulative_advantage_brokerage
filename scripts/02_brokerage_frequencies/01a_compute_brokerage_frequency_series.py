@@ -12,6 +12,7 @@ def main():
 
     with CumAdvBrokSession(engine) as session:
         d_args_config = {
+            "type": CollaboratorSeriesBrokerageInference.__name__,
             "metric": STR_CAREER_LENGTH,
             "binner": CareerLengthBinner.__name__,
             "binning": "quantile",
