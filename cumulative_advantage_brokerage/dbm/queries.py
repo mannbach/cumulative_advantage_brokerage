@@ -11,6 +11,8 @@ from .models.metric_mixin import MetricConfiguration
 from .models.bins_realization import BinsRealization
 from .models.metric_cs_bf_comparison import\
     MetricCollaboratorSeriesBrokerageFrequencyComparison
+from .models.metric_cs_br_comparison import\
+    MetricCollaboratorSeriesBrokerageRateComparison
 from .models.collaborator_series import CollaboratorSeriesBrokerage
 from .models.gender import Gender
 from .models.collaborator import Collaborator
@@ -67,6 +69,50 @@ def get_bf_comparison_results_by_id(
         df_tests["stage"].append(stage)
         df_tests["max_stage_curr"].append(max_stage_curr)
         df_tests["max_stage_next"].append(max_stage_next)
+        df_tests["grouping_key"].append(grouping_key)
+        df_tests["test_statistic"].append(test_statistic)
+        df_tests["ci_low"].append(ci_low)
+        df_tests["ci_high"].append(ci_high)
+        df_tests["p_value"].append(p_value)
+        df_tests["n_x"].append(nx)
+        df_tests["n_y"].append(ny)
+    df_tests = pd.DataFrame(df_tests)
+    df_tests = df_tests.set_index("id")
+    df_tests.name = metric
+    return df_tests
+
+def get_br_comparison_results_by_id(
+            id_metric_config: int, metric: str, session) -> pd.DataFrame:
+    q = select(
+            MetricCollaboratorSeriesBrokerageRateComparison.id,
+            MetricCollaboratorSeriesBrokerageRateComparison.stage_curr,
+            MetricCollaboratorSeriesBrokerageRateComparison.stage_next,
+            MetricCollaboratorSeriesBrokerageRateComparison.stage_max,
+            MetricCollaboratorSeriesBrokerageRateComparison.grouping_key,
+            MetricCollaboratorSeriesBrokerageRateComparison.test_statistic,
+            MetricCollaboratorSeriesBrokerageRateComparison.ci_low,
+            MetricCollaboratorSeriesBrokerageRateComparison.ci_high,
+            MetricCollaboratorSeriesBrokerageRateComparison.p_value,
+            MetricCollaboratorSeriesBrokerageRateComparison.n_x,
+            MetricCollaboratorSeriesBrokerageRateComparison.n_y,
+            )\
+        .select_from(MetricCollaboratorSeriesBrokerageRateComparison)\
+        .order_by(
+            MetricCollaboratorSeriesBrokerageRateComparison.stage_curr,
+            MetricCollaboratorSeriesBrokerageRateComparison.stage_next,
+            MetricCollaboratorSeriesBrokerageRateComparison.stage_max,
+            MetricCollaboratorSeriesBrokerageRateComparison.grouping_key)\
+        .where(
+            MetricCollaboratorSeriesBrokerageRateComparison.id_metric_configuration == id_metric_config)
+
+    df_tests = defaultdict(list)
+    for (idx, stage_curr, stage_next, stage_max,
+            grouping_key, test_statistic, ci_low,
+            ci_high, p_value, nx, ny) in session.execute(q):
+        df_tests["id"].append(idx)
+        df_tests["stage_curr"].append(stage_curr)
+        df_tests["stage_next"].append(stage_next)
+        df_tests["stage_max"].append(stage_max)
         df_tests["grouping_key"].append(grouping_key)
         df_tests["test_statistic"].append(test_statistic)
         df_tests["ci_low"].append(ci_low)

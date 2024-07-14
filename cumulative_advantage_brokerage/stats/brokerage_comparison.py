@@ -398,6 +398,26 @@ class CollaboratorSeriesRateStageComparison(CollaboratorSeriesBrokerageCompariso
                 yield result
 
 class CollaboratorSeriesRateStageCorrelation(CollaboratorSeriesRateStageComparison):
+    def align_values(
+            self, a_idc_curr: np.ndarray, a_vals_stage_curr: np.ndarray,
+            a_idc_next: np.ndarray, a_vals_stage_next: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        # Get indices of collaborators which participate in both stages
+        _, a_mask_idc_curr_is, a_mask_idc_next_is =\
+            np.intersect1d(a_idc_curr, a_idc_next,
+                assume_unique=True,
+                return_indices=True)
+
+        # Filter out collaborators which do not participate in both stages
+        a_idc_curr, a_vals_stage_curr =\
+            a_idc_curr[a_mask_idc_curr_is], a_vals_stage_curr[a_mask_idc_curr_is]
+        a_idc_next, a_vals_stage_next =\
+            a_idc_next[a_mask_idc_next_is], a_vals_stage_next[a_mask_idc_next_is]
+
+        # Align value arrays to compute correlation
+        a_vals_stage_curr = a_vals_stage_curr[np.argsort(a_idc_curr)]
+        a_vals_stage_next = a_vals_stage_next[np.argsort(a_idc_next)]
+        return a_vals_stage_curr, a_vals_stage_next
+
     def compute_comparison(
             self,
             stage_curr: int, stage_next: int, stage_max: int,
@@ -414,21 +434,11 @@ class CollaboratorSeriesRateStageCorrelation(CollaboratorSeriesRateStageComparis
         if len(a_vals_stage_curr) == 0 or len(a_vals_stage_next) == 0:
             return None
 
-        # Get indices of collaborators which participate in both stages
-        _, a_mask_idc_curr_is, a_mask_idc_next_is =\
-            np.intersect1d(a_idc_curr, a_idc_next,
-                assume_unique=True,
-                return_indices=True)
+        a_vals_stage_curr, a_vals_stage_next = self.align_values(
+            a_idc_curr=a_idc_curr, a_vals_stage_curr=a_vals_stage_curr,
+            a_idc_next=a_idc_next, a_vals_stage_next=a_vals_stage_next
+        )
 
-        # Filter out collaborators which do not participate in both stages
-        a_idc_curr, a_vals_stage_curr =\
-            a_idc_curr[a_mask_idc_curr_is], a_vals_stage_curr[a_mask_idc_curr_is]
-        a_idc_next, a_vals_stage_next =\
-            a_idc_next[a_mask_idc_next_is], a_vals_stage_next[a_mask_idc_next_is]
-
-        # Align value arrays to compute correlation
-        a_vals_stage_curr = a_vals_stage_curr[np.argsort(a_idc_curr)]
-        a_vals_stage_next = a_vals_stage_next[np.argsort(a_idc_next)]
         self._log(f"len(s_is)={len(a_vals_stage_curr)}")
         self._log(f"len(s_is + 1)={len(a_vals_stage_next)}")
 

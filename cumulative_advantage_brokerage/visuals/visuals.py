@@ -1,7 +1,10 @@
-from typing import Tuple
+from typing import Tuple, List
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, ConnectionPatch
+
+from ..constants import N_STAGES
 
 def draw_zooming_box(ax_source: plt.Axes, xy_source: Tuple[float, float], size_box: Tuple[float, float] = (.25, .25)) -> Rectangle:
     box_width, box_height = size_box
@@ -20,3 +23,27 @@ def draw_zooming_edge(fig: plt.Figure, xy_source: Tuple[float, float], xy_target
     zorder=1)
     fig.add_artist(top_right_conn)
     return top_right_conn
+
+def plot_cdfs(
+        ax: plt.Axes,
+        l_cdf: List[np.ndarray],
+        l_stages: List[int],
+        l_labels: List[str],
+        color_map,
+        print_x_label: bool = True):
+    for cdf, stage, label in zip(l_cdf, l_stages, l_labels):
+        _cdf_sorted = np.sort(cdf)
+        ax.step(
+            _cdf_sorted,
+            (np.arange(len(_cdf_sorted)) / len(_cdf_sorted)),
+            label=label,
+            linewidth=2,
+            color=color_map((stage + 1) / N_STAGES)
+        )
+
+        ax.spines[["right", "top"]].set_visible(False)
+        ax.set_xscale("log")
+        ax.set_ylabel("CDF")
+        if print_x_label:
+            ax.set_xlabel("$B(s)$")
+        _=ax.legend(frameon=False, handlelength=1, loc="lower right")

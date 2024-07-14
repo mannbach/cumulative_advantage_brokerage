@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .visuals import draw_zooming_box, draw_zooming_edge
+from .visuals import draw_zooming_box, draw_zooming_edge, plot_cdfs
 from ..stats import StatisticalTest, GrouperDummy, Grouper, MannWhitneyPermutTest
 from ..constants import OFFSET_MARKERS, N_STAGES, TPL_STR_IMPACT, TPL_CM_IMPACT, CM_CITATION, CM_PRODUCTIVITY, WIDTH_FIG_PAPER, HEIGHT_FIG_PAPER
 
@@ -97,31 +97,6 @@ def plot_test_results(
         _=ax.set_ylabel(stat_test.label_y)
         # _=ax.text(.05, .9, metric, fontsize=10, transform=ax.transAxes)
     return tuple(t_y_example)
-
-def plot_cdfs(
-        ax: plt.Axes,
-        l_cdf: List[np.ndarray],
-        stage_max: int,
-        color_map,
-        print_x_label: bool = True):
-    for i,cdf in enumerate(l_cdf):
-        _cdf_sorted = np.sort(cdf)
-        ax.step(
-            _cdf_sorted,
-            (np.arange(len(_cdf_sorted)) / len(_cdf_sorted)),
-            # 1-(np.arange(len(cdf)) / len(cdf)),
-            # where="mid",
-            label=f"$Q_{stage_max + i}$", linewidth=2,
-            color=color_map((stage_max + i + 1) / N_STAGES)
-        )
-
-        ax.spines[["right", "top"]].set_visible(False)
-        ax.set_xscale("log")
-        # ax.set_yscale("log")
-        ax.set_ylabel("CDF")
-        if print_x_label:
-            ax.set_xlabel("$B(s)$")
-        _=ax.legend(frameon=False, handlelength=1, loc="lower right")
 
 def plot_brokerage_frequency_comparison(
         tpl_d_test: Tuple[pd.DataFrame, pd.DataFrame],
