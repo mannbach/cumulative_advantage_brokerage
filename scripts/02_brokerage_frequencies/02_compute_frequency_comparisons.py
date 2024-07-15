@@ -1,7 +1,6 @@
 from typing import Dict, Any
 from argparse import ArgumentParser
 from itertools import product
-import warnings
 
 from cumulative_advantage_brokerage.career_series import\
     CollaboratorSeriesBrokerageInference, ImpactGroupsInference,\
