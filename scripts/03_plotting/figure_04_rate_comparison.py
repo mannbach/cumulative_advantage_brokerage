@@ -13,7 +13,9 @@ from cumulative_advantage_brokerage.career_series import\
 from cumulative_advantage_brokerage.stats import\
     CollaboratorSeriesRateStageComparison,\
     CollaboratorSeriesRateStageCorrelation,\
-    GrouperDummy
+    GrouperDummy, ContKolmogorovSmirnovPermutTest,\
+    MannWhitneyPermutTest, SpearmanPermutTest,\
+    PearsonPermutTest
 from cumulative_advantage_brokerage.dbm import\
     PostgreSQLEngine, CumAdvBrokSession
 from cumulative_advantage_brokerage.queries import\
@@ -42,6 +44,8 @@ def parse_args() -> Dict[str, Any]:
     ap.add_argument("-idcor-prd", f"--id-correlation-{STR_PRODUCTIVITY}",
         default=None, type=int)
 
+    ap.add_argument("--alt-metrics", action="store_true", default=False)
+
     d_a = vars(ap.parse_args())
 
     return d_a
@@ -50,9 +54,6 @@ def main():
     config = parse_config([ARG_POSTGRES_DB_APS])
     engine = PostgreSQLEngine.from_config(config, key_dbname=ARG_POSTGRES_DB_APS)
     args = parse_args()
-
-    file_out = os.path.join(
-        config[ARG_PATH_CONTAINER_OUTPUT], "04_brokerage_rate_comparison.pdf")
 
     tpl_d_cmp = []
     tpl_d_cor = []
@@ -130,11 +131,16 @@ def main():
                 tpl_r[0] = a_rates_curr
                 tpl_r[1] = a_rates_next
 
+    file_out = os.path.join(
+        config[ARG_PATH_CONTAINER_OUTPUT],
+        "04_brokerage_rate_comparison.pdf" if not args["alt_metrics"] else "si_brokerage_rate_ks_prs_comparison.pdf")
     fig = plot_brokerage_rate_comparison(
         tpl_d_test_cmp=tpl_d_cmp,
         tpl_d_test_cor=tpl_d_cor,
         tpl_rates_cmp=tpl_rates_cmp,
-        tpl_rates_cor=tpl_rates_cor
+        tpl_rates_cor=tpl_rates_cor,
+        test_cmp=ContKolmogorovSmirnovPermutTest if args["alt_metrics"] else MannWhitneyPermutTest,
+        test_cor=PearsonPermutTest if args["alt_metrics"] else SpearmanPermutTest
     )
     print(f"Saving figure to {file_out}...")
     fig.savefig(file_out, bbox_inches='tight')

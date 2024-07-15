@@ -163,7 +163,6 @@ def main():
             print("\t\tGender broker ", gender_b.gender)
             d_gac_age = gs_gacb_age\
                 .get_group((gender_a.gender, gender_c.gender, gender_b.gender))
-            # d_gac_age = d_gac_age[d_gac_age["age_b"] <= a_bins_lng[-1]] # Filter out last stage
             a_histograms_b[i,j] = np.histogram(
                 d_gac_age["age_b"],
                 bins=a_bins_career_length,

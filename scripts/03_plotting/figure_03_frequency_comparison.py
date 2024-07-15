@@ -13,7 +13,7 @@ from cumulative_advantage_brokerage.career_series import\
 from cumulative_advantage_brokerage.stats import\
     MannWhitneyPermutTest,\
     CollaboratorSeriesBrokerageComparison,\
-    GrouperDummy
+    GrouperDummy, KolmogorovSmirnovPermutTest
 from cumulative_advantage_brokerage.dbm import\
     PostgreSQLEngine, CumAdvBrokSession
 from cumulative_advantage_brokerage.queries import\
@@ -21,6 +21,11 @@ from cumulative_advantage_brokerage.queries import\
 from cumulative_advantage_brokerage.visuals import\
     plot_brokerage_frequency_comparison,\
     STAGE_MAX_DIFF_HIGH, STAGE_MAX_DIFF_LOW, STAGE_EXAMPLE
+
+MAP_TESTS = {
+    MannWhitneyPermutTest.label_file: MannWhitneyPermutTest,
+    KolmogorovSmirnovPermutTest.label_file: KolmogorovSmirnovPermutTest
+}
 
 def parse_args() -> Dict[str, Any]:
     ap = ArgumentParser()
@@ -36,6 +41,9 @@ def parse_args() -> Dict[str, Any]:
     ap.add_argument("-idcmp-prd", f"--id-comparisons-{STR_PRODUCTIVITY}",
         default=None, type=int)
 
+    ap.add_argument("--test",
+        default=MannWhitneyPermutTest.label_file, choices=[MannWhitneyPermutTest.label_file, KolmogorovSmirnovPermutTest.label_file])
+
     d_a = vars(ap.parse_args())
 
     return d_a
@@ -45,8 +53,9 @@ def main():
     engine = PostgreSQLEngine.from_config(config, key_dbname=ARG_POSTGRES_DB_APS)
     args = parse_args()
 
+    test = MAP_TESTS[args["test"]]
     file_out = os.path.join(
-        config[ARG_PATH_CONTAINER_OUTPUT], "03_brokerage_frequency_comparison.pdf")
+        config[ARG_PATH_CONTAINER_OUTPUT], "03_brokerage_frequency_comparison.pdf" if test == MannWhitneyPermutTest else "si_brokerage_frequency_ks_comparison.pdf")
 
     tpl_d_test = []
     tpl_a_cdf = []
@@ -103,7 +112,7 @@ def main():
     fig = plot_brokerage_frequency_comparison(
         tpl_d_test=tpl_d_test,
         tpl_a_cdf=tpl_a_cdf,
-        stat_test=MannWhitneyPermutTest
+        stat_test=test,
     )
     print(f"Saving figure to {file_out}...")
     fig.savefig(file_out, bbox_inches='tight')
