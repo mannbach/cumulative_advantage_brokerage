@@ -101,7 +101,9 @@ def plot_brokerage_rate_comparison(
     tpl_d_test_cmp: Tuple[pd.DataFrame, pd.DataFrame],
     tpl_d_test_cor: Tuple[pd.DataFrame, pd.DataFrame],
     tpl_rates_cmp: Tuple[pd.Series, pd.Series],
-    tpl_rates_cor: Tuple[pd.Series, pd.Series]
+    tpl_rates_cor: Tuple[pd.Series, pd.Series],
+    test_cmp: Type[StatisticalTest] = MannWhitneyPermutTest,
+    test_cor: Type[StatisticalTest] = SpearmanPermutTest
 ):
     fig = plt.figure(figsize=(WIDTH_FIG_PAPER, .4 * WIDTH_FIG_PAPER))
     grid = plt.GridSpec(2,8)
@@ -125,13 +127,13 @@ def plot_brokerage_rate_comparison(
     y_example_cmp = plot_rate_comparison(
         l_ax=(ax_cmp_cit, ax_cmp_prd),
         tpl_d_test=tpl_d_test_cmp,
-        stat_test=MannWhitneyPermutTest,
+        stat_test=test_cmp,
         plot_xticks=False)
     cb = plot_spearman_heatmap(tpl_rates_example=tpl_rates_cor, ax=ax_heat)
     y_example_corr = plot_rate_comparison(
         l_ax=(ax_corr_cit, ax_corr_prd),
         tpl_d_test=tpl_d_test_cor,
-        stat_test=SpearmanPermutTest,
+        stat_test=test_cor,
         plot_xticks=False)
 
     box_size_x = .2
