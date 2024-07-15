@@ -59,19 +59,23 @@ To quickly navigate the code base, we provide a brief description of the project
 │   ├── config
 │   ├── constants
 │   ├── data # Handling of raw data
-│   ├── dbm # Database models
-│   └── network # Network & tracking of brokerage events
+│   ├── dbm # Database models and communication
+│   ├── network # Network & tracking of brokerage events
+│   ├── queries.py # Common queries
+│   ├── stats # Statistical tests, groupers and comparisons
+│   └── visuals # Plotting code
 ├── data # Folder in container that contains the input data
 │   └── aps # Contains the APS data
-├── docker-compose.yml # Manages images (local & database)
+├── docker-compose.yml
 ├── output # Contains output data, results and plots
 │   ├── data
-│   └── logs
+│   ├── logs
 ├── requirements.txt
-├── scripts # Entry-point of callable scripts (in order!)
+├── scripts # Entry-point of callable scripts
 │   ├── 00_data_preprocessing # CSV transform, name disamb. & gender inference
 │   ├── 01_database_setup # Setup of database infrastructure
-│   └── 02_brokerage_frequencies # & career stages & impact groups
+│   ├── 02_brokerage_frequencies # Career stages, impact groups & comparisons
+│   └── 03_plotting # Plotting
 ├── secrets
 │   └── sample.env # Configuration file
 └── setup.py
