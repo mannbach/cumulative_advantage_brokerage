@@ -1,6 +1,7 @@
 from sqlalchemy import select, Column, func, case, or_, and_, alias, distinct
 
-from ..dbm import Collaboration, Project
+from ..dbm.models.collaboration import Collaboration
+from ..dbm.models.project import Project
 from ..constants import\
     CAREER_LENGTH_MAX, DATE_OBSERVATION_END, DURATION_BUFFER_AUTHOR_ACTIVE
 

@@ -40,6 +40,7 @@ STR_PRODUCTIVITY = "productivity"
 TPL_STR_IMPACT = (STR_CITATIONS, STR_PRODUCTIVITY)
 CAREER_LENGTH_MAX = timedelta(days=365*40)
 DURATION_BUFFER_AUTHOR_ACTIVE = timedelta(days=365*4)
+DATE_OBSERVATION_START = datetime(year=1893, month=7, day=1)
 DATE_OBSERVATION_END = datetime(year=2020, month=12, day=31)
 CS_BINS_PERCENTILES = [0.0, 0.5, 0.7, 0.85, 0.95, 1.0]
 N_STAGES = len(CS_BINS_PERCENTILES) - 1
@@ -62,6 +63,35 @@ OFFSET_MARKERS = .15
 COLOR_BROK = "#574e91"
 OFFSET_HET_HIST = (0, 1, 0)
 XLOGSCALE_HET_HIST = (False, True, True)
+
+# Gender plot
+M_GENDER_LABEL = {
+    "female": "women",
+    "male": "men"
+}
+CM_GENDER = {
+    "unknown": "#ffffbf", # https://colorbrewer2.org/#type=diverging&scheme=BrBG&n=5
+    "female": "#d7191c",
+    "male": "#2c7bb6",
+}
+L_MOTIF_GEN_SORTED_AGG=[
+    ("female", "female", "female"),
+    ("male", "female", "female"),
+    ("male", "male", "female"),
+    ("male", "male", "male"),
+]
+D_MOTIF_GEN_SORTED_AGG_MISSING={
+    ("female", "female", "female"): (),
+    ("male", "female", "female"): (("female", "male", "female"), ("female", "female", "male")),
+    ("male", "male", "female"): (("male", "female", "male"), ("female", "male", "male")),
+    ("male", "male", "male"): (),
+}
+CM_GENDER_TRIPLET = {
+    ("female", "female", "female"): CM_GENDER["female"],
+    ("male", "female", "female"): "#fdae61",
+    ("male", "male", "female"): "#abd9e9",
+    ("male", "male", "male"): CM_GENDER["male"],
+}
 
 # ARG NAMES
 ARG_PATH_CONTAINER_DATA = "PATH_CONTAINER_DATA"
