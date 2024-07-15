@@ -9,7 +9,7 @@ import numpy as np
 from cumulative_advantage_brokerage.config import parse_config
 from cumulative_advantage_brokerage.constants import\
     ARG_POSTGRES_DB_APS,\
-    STR_CITATIONS, STR_PRODUCTIVITY, STR_CAREER_LENGTH,\
+    STR_CAREER_LENGTH,\
     ARG_PATH_CONTAINER_OUTPUT, N_STAGES,\
     L_MOTIF_GEN_SORTED_AGG, D_MOTIF_GEN_SORTED_AGG_MISSING
 from cumulative_advantage_brokerage.career_series import\
