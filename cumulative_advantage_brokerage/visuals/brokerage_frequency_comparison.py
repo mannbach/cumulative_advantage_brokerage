@@ -131,15 +131,17 @@ def plot_brokerage_frequency_comparison(
     plot_cdfs(
         ax=right_top_subplot,
         l_cdf=tpl_a_cdf[0],
-        stage_max=STAGE_MAX_DIFF_HIGH,
+        l_stages=range(N_STAGES - 1),
+        l_labels=[f"$Q_{m} \\leftrightarrow Q_{m+1}$" for m in range(N_STAGES - 1)],
         color_map=CM_CITATION,
-        print_x_label=False
+        x_label=None
     )
     plot_cdfs(
         ax=right_bottom_subplot,
         l_cdf=tpl_a_cdf[1],
+        l_stages=range(N_STAGES - 1),
+        l_labels=[f"$Q_{m} \\leftrightarrow Q_{m+1}$" for m in range(N_STAGES - 1)],
         color_map=CM_PRODUCTIVITY,
-        stage_max=STAGE_MAX_DIFF_LOW
     )
 
     box_size_x, box_size_y = .25, .06
