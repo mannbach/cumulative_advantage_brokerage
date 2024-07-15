@@ -15,7 +15,8 @@ from cumulative_advantage_brokerage.stats import\
     CollaboratorSeriesBrokerageComparison,\
     GrouperDummy
 from cumulative_advantage_brokerage.dbm import\
-    PostgreSQLEngine, CumAdvBrokSession,\
+    PostgreSQLEngine, CumAdvBrokSession
+from cumulative_advantage_brokerage.queries import\
     get_bf_comparison_results_by_id, init_metric_id
 from cumulative_advantage_brokerage.visuals import\
     plot_brokerage_frequency_comparison,\

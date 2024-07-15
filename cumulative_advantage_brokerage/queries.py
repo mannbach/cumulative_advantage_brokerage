@@ -27,7 +27,7 @@ def select_latest_metric_config_id_by_args(metric_args: Dict[str, str]) -> int:
         .where(
             and_(
                 *(MetricConfiguration.args[k].as_string() == v\
-                    for k,v in metric_args.items)))\
+                    for k,v in metric_args.items())))\
         .order_by(MetricConfiguration.computed_at.desc())\
         .limit(1)
 

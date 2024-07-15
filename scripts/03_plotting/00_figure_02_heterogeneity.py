@@ -13,9 +13,10 @@ from cumulative_advantage_brokerage.constants import\
 from cumulative_advantage_brokerage.career_series import\
     CitationsBinner, ProductivityBinner, CareerLengthBinner,\
     StandardFilter
+from cumulative_advantage_brokerage.queries import\
+    init_metric_id, get_bin_values_by_id
 from cumulative_advantage_brokerage.dbm import\
-    get_single_result, select_latest_metric_config_id_by_metric,\
-    get_bin_values_by_id, PostgreSQLEngine, CumAdvBrokSession
+    PostgreSQLEngine, CumAdvBrokSession
 from cumulative_advantage_brokerage.visuals import plot_heterogeneity
 
 def parse_args() -> Dict[str, Any]:
@@ -32,19 +33,6 @@ def parse_args() -> Dict[str, Any]:
 
     return d_a
 
-def init_metric_id(metric: str, session) -> int:
-    id_metric = get_single_result(
-        session=session,
-        query=select_latest_metric_config_id_by_metric(metric))
-    assert id_metric is not None, "No career series ID found."
-    warnings.warn(
-        (f"No metric ID provided for {metric}. "
-        "Using latest metric. "
-        "This only works if the last computation of "
-        "the respective binning was successful!\n"
-        f"Found ID '{id_metric}'."))
-    return id_metric
-
 def main():
     config = parse_config([ARG_POSTGRES_DB_APS])
     engine = PostgreSQLEngine.from_config(config, key_dbname=ARG_POSTGRES_DB_APS)
@@ -60,10 +48,14 @@ def main():
                 ("id_collaborator_series", f"id_impact_group_{STR_CITATIONS}", f"id_impact_group_{STR_PRODUCTIVITY}"),
                 (STR_CAREER_LENGTH, *TPL_STR_IMPACT),
                 (CareerLengthBinner, CitationsBinner, ProductivityBinner)):
-            print(f"Working on `{str_metric}`...\nGetting bins.")
+            print(f"\tWorking on `{str_metric}`...")
             id_metric = args[key_metric]
             if id_metric is None:
-                id_metric = init_metric_id(str_metric, session)
+                id_metric = init_metric_id(
+                    session=session,
+                    metric_args={
+                        "metric": str_metric,
+                        "type": Binner.__name__,})
             l_bins_stages.append(get_bin_values_by_id(session, id_metric))
             print(f"\tBins: {l_bins_stages[-1]}")
 

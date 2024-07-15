@@ -3,6 +3,9 @@ from argparse import ArgumentParser
 from itertools import product
 import warnings
 
+from cumulative_advantage_brokerage.career_series import\
+    CollaboratorSeriesBrokerageInference, ImpactGroupsInference,\
+    CitationsBinner, ProductivityBinner
 from cumulative_advantage_brokerage.config import parse_config
 from cumulative_advantage_brokerage.constants import\
     ARG_POSTGRES_DB_APS, TPL_STR_IMPACT,\
@@ -18,8 +21,9 @@ from cumulative_advantage_brokerage.stats import\
     ContKolmogorovSmirnovPermutTest,\
     SpearmanPermutTest, PearsonPermutTest
 from cumulative_advantage_brokerage.dbm import\
-    PostgreSQLEngine, CumAdvBrokSession, MetricConfiguration,\
-    get_single_result, select_latest_metric_config_id_by_metric,\
+    PostgreSQLEngine, CumAdvBrokSession, MetricConfiguration
+from cumulative_advantage_brokerage.queries import\
+    init_metric_id,\
     get_bin_values_by_id
 
 GROUPERS = {g.name: g\
@@ -77,16 +81,11 @@ def main():
     with CumAdvBrokSession(engine) as session:
         id_metric_career = args["id_collaborator_series"]
         if id_metric_career is None:
-            id_metric_career = get_single_result(
+            id_metric_career = init_metric_id(
                 session=session,
-                query=select_latest_metric_config_id_by_metric(STR_CAREER_LENGTH))
-            assert id_metric_career is not None, "No career series ID found."
-            warnings.warn(
-                ("No career series ID provided. "
-                 "Using latest career series. "
-                 "This only works if the last computation of "
-                 "brokerage frequencies was successful!\n"
-                 f"Found ID '{id_metric_career}'."))
+                metric_args={
+                    "metric": STR_CAREER_LENGTH,
+                    "type": CollaboratorSeriesBrokerageInference.__name__,})
 
         a_bins_career = get_bin_values_by_id(session, id_metric_career)
 
@@ -99,20 +98,19 @@ def main():
 
             print(f"Working on comparison=`{comparison}`, test=`{test.label_file}` and grouper=`{grouper.name}`.")
             l_metric_ids = []
-            for metric_impact in TPL_STR_IMPACT:
+            for metric_impact, Binner in zip(
+                    TPL_STR_IMPACT,
+                    (CitationsBinner, ProductivityBinner)):
                 print("\t",metric_impact)
                 id_impact_group = args[f"id_impact_group_{metric_impact}"]
                 if id_impact_group is None:
-                    id_impact_group = get_single_result(
+                    id_impact_group = init_metric_id(
                         session=session,
-                        query=select_latest_metric_config_id_by_metric(metric_impact))
-                    warnings.warn(
-                        (f"No impact group ID provided for `{metric_impact}`. "
-                        "Using latest impact group. "
-                        "This only works if the last computation of "
-                        "the impact group was successful!\n"
-                        f"Found ID '{id_impact_group}'."))
-                    assert id_impact_group is not None, "No impact group ID found."
+                        metric_args={
+                            "metric": metric_impact,
+                            "type": ImpactGroupsInference.__name__,
+                            "binner": Binner.__name__})
+
                 m_config_cmp = MetricConfiguration(
                     args={
                         "type": CMP_OPTIONS_CLS[comparison].__name__,
