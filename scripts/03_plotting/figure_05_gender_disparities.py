@@ -209,6 +209,8 @@ def main():
             aggregate_mixed=True,
             plot_init_cnt=False,
             plot_init=False)
+        fig_sen_norm.legend(
+            frameon=False, ncol=4, loc="upper center")
         file_out_seniority_norm = os.path.join(
             config[ARG_PATH_CONTAINER_OUTPUT], "si_gender_brokerage_count_norm.pdf")
         print(f"Saving normalized gender seniority disparities to {file_out_seniority_norm}.")
