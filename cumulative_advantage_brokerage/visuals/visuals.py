@@ -51,6 +51,3 @@ def plot_cdfs(
         ax.set_xscale("log")
         if print_ylabel:
             ax.set_ylabel("CDF" if not ccdf else "CCDF")
-        # if x_label is not None:
-        #     ax.set_xlabel(x_label)
-        # _=ax.legend(frameon=False, handlelength=1, loc="lower right")
