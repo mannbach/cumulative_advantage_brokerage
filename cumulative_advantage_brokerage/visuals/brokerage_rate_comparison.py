@@ -126,6 +126,7 @@ def plot_brokerage_rate_comparison(
         l_labels=[f"$s_{STAGE_EXAMPLE_CMP + i}$" for i in range(2)],
         color_map=CM_CAREER_LENGTH)
     ax_cdf.set_xlabel("$R(s)$", labelpad=0.8)
+    ax_cdf.legend(frameon=False, handlelength=1, loc="lower right")
     y_example_cmp = plot_rate_comparison(
         l_ax=(ax_cmp_cit, ax_cmp_prd),
         tpl_d_test=tpl_d_test_cmp,
