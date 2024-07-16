@@ -148,6 +148,7 @@ def main():
                 ccdf=True,
                 print_ylabel=False
             )
+    fig_br.text(.225, .9085, "career stages")
 
     print(f"Saving frequency CCDFs to {file_out_frequencies}.")
     fig_bf.savefig(file_out_frequencies,
