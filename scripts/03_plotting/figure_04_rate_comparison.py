@@ -134,7 +134,7 @@ def main():
     file_out = os.path.join(
         config[ARG_PATH_CONTAINER_OUTPUT],
         "04_brokerage_rate_comparison.pdf" if not args["alt_metrics"] else "si_brokerage_rate_ks_prs_comparison.pdf")
-    fig = plot_brokerage_rate_comparison(
+    fig, _, l_artists = plot_brokerage_rate_comparison(
         tpl_d_test_cmp=tpl_d_cmp,
         tpl_d_test_cor=tpl_d_cor,
         tpl_rates_cmp=tpl_rates_cmp,
@@ -143,7 +143,7 @@ def main():
         test_cor=PearsonPermutTest if args["alt_metrics"] else SpearmanPermutTest
     )
     print(f"Saving figure to {file_out}...")
-    fig.savefig(file_out, bbox_inches='tight')
+    fig.savefig(file_out, bbox_inches='tight', bbox_extra_artists=l_artists)
 
 if __name__ == "__main__":
     main()

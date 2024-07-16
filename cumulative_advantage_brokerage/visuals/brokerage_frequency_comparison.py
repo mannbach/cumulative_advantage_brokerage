@@ -20,6 +20,7 @@ def plot_test_results(
         tpl_d_test: Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame],
         grouper: Grouper = GrouperDummy,
         show_not_sign: bool = False,
+        ret_sample: bool = True,
         l_cols_labels: Union[None, List[str]] = None)\
             -> Tuple[float, float]:
     t_y_example = [0.5,0.5]
@@ -63,10 +64,11 @@ def plot_test_results(
                 _alphas= [1. if p <.05 else .3\
                             for p in d_test_sel["p_value"] if p < 0.05 or show_not_sign]
 
-                if (stage_target_curr == STAGE_MAX_DIFF_HIGH) and (metric == TPL_STR_IMPACT[0]):
-                    t_y_example[0] = d_test_sel["test_statistic"].loc[STAGE_EXAMPLE]
-                if (stage_target_curr == STAGE_MAX_DIFF_LOW) and (metric == TPL_STR_IMPACT[1]):
-                    t_y_example[1] = d_test_sel.loc[STAGE_EXAMPLE, "test_statistic"]
+                if ret_sample:
+                    if (stage_target_curr == STAGE_MAX_DIFF_HIGH) and (metric == TPL_STR_IMPACT[0]):
+                        t_y_example[0] = d_test_sel["test_statistic"].loc[STAGE_EXAMPLE]
+                    if (stage_target_curr == STAGE_MAX_DIFF_LOW) and (metric == TPL_STR_IMPACT[1]):
+                        t_y_example[1] = d_test_sel.loc[STAGE_EXAMPLE, "test_statistic"]
 
                 ax_col.scatter(
                     d_test_sel.index.values + _off,
@@ -97,7 +99,8 @@ def plot_test_results(
     for ax, metric in zip(a_ax[:,0], TPL_STR_IMPACT):
         _=ax.set_ylabel(stat_test.label_y)
         # _=ax.text(.05, .9, metric, fontsize=10, transform=ax.transAxes)
-    return tuple(t_y_example)
+    if ret_sample:
+        return tuple(t_y_example)
 
 def plot_brokerage_frequency_comparison(
         tpl_d_test: Tuple[pd.DataFrame, pd.DataFrame],
@@ -195,7 +198,7 @@ def plot_brokerage_frequency_comparison(
 
     return fig
 
-def plot_gender_comparison(
+def plot_bf_gender_comparison(
         tpl_d_tests_bf_cmp_gender
 ):
     fig, a_ax = plt.subplots(
@@ -207,7 +210,8 @@ def plot_gender_comparison(
         grouper=GrouperGender,
         stat_test=MannWhitneyPermutTest,
         tpl_d_test=tpl_d_tests_bf_cmp_gender,
-        show_not_sign=False)
+        show_not_sign=False,
+        ret_sample=False)
 
     l_legends = []
     for metric, cm, pos_y in zip(TPL_STR_IMPACT, TPL_CM_IMPACT, (.97, .53)):
