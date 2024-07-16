@@ -146,8 +146,9 @@ def main():
     print("\nMerging brokerage events with author info and filtering by gender...")
     d_brokerage_auth = merge_brokerage_events_authors(
         d_brokage_events, d_author_info)
-    print((f"This removed {len(d_brokage_events) - len(d_brokerage_auth)}\
-            / {len(d_brokage_events)} events.\n"))
+    print((f"We retain {len(d_brokerage_auth)}"
+           f" (out of {len(d_brokage_events)}, "
+           f"{len(d_brokerage_auth) / len(d_brokage_events):.2%}) events.\n"))
 
     print("Computing histograms by gender of a and c...")
     a_histograms_b = np.zeros((4, 2, N_STAGES-1))
