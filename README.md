@@ -155,4 +155,4 @@ In case you face any problems feel free to file an issue directly in GitHub or s
 
 ## Code & data dependency backlinks
 - APS data integrator: `f8ea8f854720a5df8ee7d7c8119cbb773be94cbe`
-- Zenodo DOI: [10.5281/zenodo.12724812](https://zenodo.org/doi/)
+- Zenodo DOI: [10.5281/zenodo.12724812](https://zenodo.org/doi/10.5281/zenodo.12724812)
