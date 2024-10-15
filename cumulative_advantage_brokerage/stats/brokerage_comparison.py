@@ -200,7 +200,7 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
             grouping_key=grouping_key)
         self._log(f"len(m+1)={len(a_vals_stage_max_next)}")
 
-        if len(a_vals_stage_max_curr) == 0 or len(a_vals_stage_max_next) == 0:
+        if len(a_vals_stage_max_curr) < 2 or len(a_vals_stage_max_next) < 2:
             return None
 
         _, t, p, ci = self._perform_test(a_vals_stage_max_next, a_vals_stage_max_curr)
@@ -211,8 +211,8 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
             max_stage_curr=stage_max_curr,
             max_stage_next=stage_max_next,
             grouping_key=grouping_key,
-            test_statistic=float(t),
-            p_value=float(p),
+            test_statistic=float(t) if t is not None else None,
+            p_value=float(p) if p is not None else None,
             # ci_low=-np.inf,
             # ci_high=np.inf,
             ci_low=float(ci.low) if ci is not None else None,
@@ -247,7 +247,7 @@ class CollaboratorSeriesBrokerageComparison(HasSession):
                 self._log(msg=f"\tmax_stage_curr=`{result.max_stage_curr}`", verbose=verbose)
                 self._log(msg=f"\tmax_stage_next=`{result.max_stage_next}`", verbose=verbose)
                 self._log(msg=f"\tgrouping_key=`{result.grouping_key}`", verbose=verbose)
-                self._log(msg=f"\ttest_statistic=`{result.test_statistic:.2f}`", verbose=verbose)
+                self._log(msg=f"\ttest_statistic={result.test_statistic:.2f}" if result.test_statistic is not None else 'None', verbose=verbose)
                 self._log(msg=f"\tp_value=`{result.p_value:.2f}`", verbose=verbose)
                 self._log(msg=f"\tci_low=`{result.ci_low:.2f}`", verbose=verbose)
                 self._log(msg=f"\tci_high=`{result.ci_high:.2f}", verbose=verbose)
@@ -332,7 +332,7 @@ class CollaboratorSeriesRateStageComparison(CollaboratorSeriesBrokerageCompariso
         _, a_vals_stage_next = self.get_values(stage_curr=stage_next, stage_max=stage_max, verbose=verbose, grouping_key=grouping_key)
         self._log(f"len(s+1)={len(a_vals_stage_next)}")
 
-        if len(a_vals_stage_curr) == 0 or len(a_vals_stage_next) == 0:
+        if len(a_vals_stage_curr) < 2 or len(a_vals_stage_next) < 2:
             return None
 
         _, t, p, ci = self._perform_test(a_vals_stage_next, a_vals_stage_curr)
@@ -343,8 +343,8 @@ class CollaboratorSeriesRateStageComparison(CollaboratorSeriesBrokerageCompariso
             stage_curr=stage_curr,
             stage_max=stage_max,
             grouping_key=grouping_key,
-            test_statistic=float(t),
-            p_value=float(p),
+            test_statistic=float(t) if t is not None else None,
+            p_value=float(p) if p is not None else None,
             ci_low=float(ci.low) if ci is not None else None,
             ci_high=float(ci.high) if ci is not None else None,
             n_x=len(a_vals_stage_next),
@@ -377,7 +377,7 @@ class CollaboratorSeriesRateStageComparison(CollaboratorSeriesBrokerageCompariso
                 self._log(msg=f"\tstage_next=`{result.stage_next}`", verbose=verbose)
                 self._log(msg=f"\tstage_max=`{result.stage_max}`", verbose=verbose)
                 self._log(msg=f"\tgrouping_key=`{result.grouping_key}`", verbose=verbose)
-                self._log(msg=f"\ttest_statistic=`{result.test_statistic:.2f}`", verbose=verbose)
+                self._log(msg=f"\ttest_statistic={result.test_statistic:.2f}" if result.test_statistic is not None else 'None', verbose=verbose)
                 self._log(msg=f"\tp_value=`{result.p_value:.2f}`", verbose=verbose)
                 if result.ci_low is not None:
                     self._log(msg=f"\tci_low=`{result.ci_low:.2f}`", verbose=verbose)
@@ -450,8 +450,8 @@ class CollaboratorSeriesRateStageCorrelation(CollaboratorSeriesRateStageComparis
             stage_curr=stage_curr,
             stage_max=stage_max,
             grouping_key=grouping_key,
-            test_statistic=float(t),
-            p_value=float(p),
+            test_statistic=float(t) if t is not None else None,
+            p_value=float(p) if p is not None else None,
             ci_low=float(ci.low) if ci is not None else None,
             ci_high=float(ci.high) if ci is not None else None,
             n_x=len(a_vals_stage_next),

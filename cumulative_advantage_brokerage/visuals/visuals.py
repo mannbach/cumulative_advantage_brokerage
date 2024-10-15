@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,14 +28,20 @@ def plot_cdfs(
         ax: plt.Axes,
         l_cdf: List[np.ndarray],
         l_stages: List[int],
-        l_labels: List[str],
         color_map,
-        print_x_label: bool = True):
+        l_labels: Optional[List[str]] = None,
+        print_ylabel: bool = True,
+        ccdf: bool = False):
+    if l_labels is None:
+        l_labels = [None for _ in range(l_stages)]
     for cdf, stage, label in zip(l_cdf, l_stages, l_labels):
         _cdf_sorted = np.sort(cdf)
+        _cdf_vals = (np.arange(len(_cdf_sorted)) / len(_cdf_sorted))
+        if ccdf:
+            _cdf_vals = 1 - _cdf_vals
         ax.step(
             _cdf_sorted,
-            (np.arange(len(_cdf_sorted)) / len(_cdf_sorted)),
+            _cdf_vals,
             label=label,
             linewidth=2,
             color=color_map((stage + 1) / N_STAGES)
@@ -43,7 +49,5 @@ def plot_cdfs(
 
         ax.spines[["right", "top"]].set_visible(False)
         ax.set_xscale("log")
-        ax.set_ylabel("CDF")
-        if print_x_label:
-            ax.set_xlabel("$B(s)$")
-        _=ax.legend(frameon=False, handlelength=1, loc="lower right")
+        if print_ylabel:
+            ax.set_ylabel("CDF" if not ccdf else "CCDF")

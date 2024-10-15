@@ -1,5 +1,7 @@
 from .visuals import draw_zooming_box, draw_zooming_box
 from .heterogeneity import plot_heterogeneity, N_BINS_HIST
-from .brokerage_frequency_comparison import plot_brokerage_frequency_comparison, STAGE_MAX_DIFF_HIGH, STAGE_MAX_DIFF_LOW, STAGE_EXAMPLE
-from .brokerage_rate_comparison import plot_brokerage_rate_comparison, STAGE_EXAMPLE_CMP, STAGE_EXAMPLE_CORR, STAGE_MAX_EXAMPLE_CMP, STAGE_MAX_EXAMPLE_CORR
+from .brokerage_frequency_comparison import plot_brokerage_frequency_comparison, STAGE_MAX_DIFF_HIGH, STAGE_MAX_DIFF_LOW, STAGE_EXAMPLE, plot_bf_gender_comparison, plot_birth_decade_comparison
+from .brokerage_rate_comparison import plot_brokerage_rate_comparison, STAGE_EXAMPLE_CMP, STAGE_EXAMPLE_CORR, STAGE_MAX_EXAMPLE_CMP, STAGE_MAX_EXAMPLE_CORR, plot_br_gender_comparison
 from .gender_disparities import plot_author_gender_evolution, plot_gender_seniority, plot_gen_brok_evolution
+from .distributions import setup_ccdf_plot
+from .visuals import plot_cdfs

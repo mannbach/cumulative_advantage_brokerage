@@ -146,8 +146,9 @@ def main():
     print("\nMerging brokerage events with author info and filtering by gender...")
     d_brokerage_auth = merge_brokerage_events_authors(
         d_brokage_events, d_author_info)
-    print((f"This removed {len(d_brokage_events) - len(d_brokerage_auth)}\
-            / {len(d_brokage_events)} events.\n"))
+    print((f"We retain {len(d_brokerage_auth)}"
+           f" (out of {len(d_brokage_events)}, "
+           f"{len(d_brokerage_auth) / len(d_brokage_events):.2%}) events.\n"))
 
     print("Computing histograms by gender of a and c...")
     a_histograms_b = np.zeros((4, 2, N_STAGES-1))
@@ -163,7 +164,6 @@ def main():
             print("\t\tGender broker ", gender_b.gender)
             d_gac_age = gs_gacb_age\
                 .get_group((gender_a.gender, gender_c.gender, gender_b.gender))
-            # d_gac_age = d_gac_age[d_gac_age["age_b"] <= a_bins_lng[-1]] # Filter out last stage
             a_histograms_b[i,j] = np.histogram(
                 d_gac_age["age_b"],
                 bins=a_bins_career_length,
@@ -209,6 +209,8 @@ def main():
             aggregate_mixed=True,
             plot_init_cnt=False,
             plot_init=False)
+        fig_sen_norm.legend(
+            frameon=False, ncol=4, loc="upper center")
         file_out_seniority_norm = os.path.join(
             config[ARG_PATH_CONTAINER_OUTPUT], "si_gender_brokerage_count_norm.pdf")
         print(f"Saving normalized gender seniority disparities to {file_out_seniority_norm}.")

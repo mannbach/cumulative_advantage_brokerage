@@ -135,7 +135,7 @@ def init_metric_id(metric_args: Dict[str, str], session)\
     id_metric = get_single_result(
         session=session,
         query=select_latest_metric_config_id_by_args(metric_args))
-    assert id_metric is not None, f"No career series ID found with args\n{metric_args}."
+    assert id_metric is not None, f"No metric ID found with args\n{metric_args}."
     warnings.warn(
         (f"No metric ID provided for {metric_args}. "
         "Using latest metric. "
