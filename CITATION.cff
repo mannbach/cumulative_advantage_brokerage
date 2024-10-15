@@ -1,0 +1,50 @@
+# This CITATION.cff reference content was generated from Zotero.
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: >-
+    Cumulative Advantage of Brokerage in Academia
+authors:
+  - family-names: Bachmann
+    given-names: Jan
+    orcid: "https://orcid.org/0000-0002-6153-4714"
+  - family-names: Espín-Noboa
+    given-names: Lisette
+    orcid: "https://orcid.org/0000-0002-3945-2966"
+  - family-names: Iñiguez
+    given-names: Gerardo
+    orcid: "https://orcid.org/0000-0001-7181-5520"
+  - family-names: Karimi
+    given-names: Fariba
+    orcid: "https://orcid.org/0000-0002-0037-2475"
+version: "v1.0-submission"
+doi: 10.5281/zenodo.12751527
+date-released: 2024-07-16
+url: https://doi.org/10.5281/zenodo.12751527
+preferred-citation:
+  title: >-
+      Cumulative Advantage of Brokerage in Academia
+  type: preprint
+  database: arXiv.org
+  date-accessed: 2024-07-17T14:14:50Z
+  repository: arXiv
+  url: http://arxiv.org/abs/2407.11909
+  keywords:
+    - Computer Science - Social and Information Networks
+    - Physics - Physics and Society
+    - Physics - Data Analysis, Statistics and Probability
+    - J.4
+    - 62P25, 91D30
+  authors:
+    - family-names: Bachmann
+      given-names: Jan
+      orcid: "https://orcid.org/0000-0002-6153-4714"
+    - family-names: Espín-Noboa
+      given-names: Lisette
+      orcid: "https://orcid.org/0000-0002-3945-2966"
+    - family-names: Iñiguez
+      given-names: Gerardo
+      orcid: "https://orcid.org/0000-0001-7181-5520"
+    - family-names: Karimi
+      given-names: Fariba
+      orcid: "https://orcid.org/0000-0002-0037-2475"
+  date-published: 2024-07-16
