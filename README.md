@@ -1,4 +1,6 @@
 # Cumulative advantage of brokerage in academia
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12751527.svg)](https://doi.org/10.5281/zenodo.12751527)
+
 This repository contains the code to reproduce the results of the "Cumulative advantage of brokerage in academia" paper.
 A summary of the [project structure](#project-structure) and [frequent problems](#faq) can be found below.
 
