@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .visuals import draw_zooming_box, draw_zooming_edge, plot_cdfs
-from ..stats import StatisticalTest, GrouperDummy, Grouper, MannWhitneyPermutTest, GrouperGender, GrouperBirthDecade
+from ..stats import StatisticalTest, GrouperDummy, Grouper, MannWhitneyPermutTest, GrouperGender, GrouperBirthDecade, GrouperRole
 from ..constants import OFFSET_MARKERS, N_STAGES, TPL_STR_IMPACT, TPL_CM_IMPACT, CM_CITATION, CM_PRODUCTIVITY, WIDTH_FIG_PAPER, HEIGHT_FIG_PAPER, M_GENDER_LABEL
 from ..dbm.models.gender import GENDER_FEMALE, GENDER_MALE, GENDER_UNKNOWN
 
@@ -358,3 +358,16 @@ def plot_birth_decade_comparison(
     fig.subplots_adjust(hspace=.5, wspace=.1)
 
     return fig, a_ax, l_artists
+
+def plot_bf_role_comparison(tpl_d_tests: Tuple[pd.DataFrame, pd.DataFrame]) -> Tuple[plt.Figure, List[plt.Axes]]:
+    fig, a_ax = plt.subplots(
+        figsize=[WIDTH_FIG_PAPER, HEIGHT_FIG_PAPER],
+        nrows=2, ncols=3, sharex=True, sharey=True)
+
+    plot_test_results(
+        a_ax=a_ax,
+        grouper=GrouperRole,
+        stat_test=MannWhitneyPermutTest,
+        tpl_d_test=tpl_d_tests)
+
+    return fig, a_ax

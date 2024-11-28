@@ -6,7 +6,7 @@ import scipy as sc
 import matplotlib.pyplot as plt
 
 from .visuals import draw_zooming_box, draw_zooming_edge, plot_cdfs
-from ..stats import StatisticalTest, MannWhitneyPermutTest, SpearmanPermutTest
+from ..stats import StatisticalTest, MannWhitneyPermutTest, SpearmanPermutTest, GrouperRole
 from ..dbm.models.gender import GENDER_FEMALE, GENDER_MALE
 from ..constants import  N_STAGES, TPL_STR_IMPACT, TPL_CM_IMPACT, CM_CAREER_LENGTH, WIDTH_FIG_PAPER, HEIGHT_FIG_PAPER, STR_PRODUCTIVITY
 
@@ -295,5 +295,60 @@ def plot_br_gender_comparison(
         ax.set_xlabel("career stage $s_i \\leftrightarrow s_{{i+1}}$")
 
     # fig.subplots_adjust(wspace=.5, hspace=.6)
+
+    return fig, a_ax, l_legends
+
+def plot_br_role_comparison(
+        tpl_d_tests_br_cmp_role: Tuple[pd.DataFrame, pd.DataFrame],
+        stat_test: StatisticalTest = MannWhitneyPermutTest
+):
+    fig,a_ax = plt.subplots(figsize=(WIDTH_FIG_PAPER, (2/3)*HEIGHT_FIG_PAPER), nrows=2, ncols=3, sharex=True, sharey="row")
+
+    for a_ax_role, role in zip(
+        a_ax.T,
+        GrouperRole.possible_values):
+        tpl_d_tests_br_gender_curr = (
+            d_tests[d_tests["grouping_key"] == role]
+                for d_tests in tpl_d_tests_br_cmp_role
+        )
+        plot_single_rate_result(
+            t_ax=a_ax_role,
+            t_d_tests=tpl_d_tests_br_gender_curr,
+            stat_test=stat_test)
+
+    l_legends = []
+    for metric, cm, pos_x in zip(
+            TPL_STR_IMPACT,
+            TPL_CM_IMPACT,
+            (.075, 0.525)):
+        legend = fig.legend(
+            [plt.Line2D([], [],
+                color=cm((stage_max+1) / N_STAGES),
+                label=stage_max,
+                marker="o",
+                linestyle="None")\
+                    for stage_max in range(N_STAGES)],
+            [f"$Q_{m}$" for m in range(N_STAGES)],
+            frameon=False,
+            ncol=N_STAGES,
+            columnspacing=.1,
+            handletextpad=.05,
+            loc="upper left",
+            bbox_to_anchor=(pos_x, 1.05))
+        legend.set_title(metric)
+        l_legends.append(legend)
+
+    for role in GrouperRole.possible_values:
+        l_legends.append(
+            fig.text(.025, .95,
+                    role, transform=fig.transFigure))
+
+    for ax in a_ax[-1]:
+        ax.set_xticks(
+            np.arange(N_STAGES - 2),
+            labels=map(
+                lambda s: f"$s_{s} \\leftrightarrow s_{s+1}$",
+                np.arange(N_STAGES - 2)))
+        ax.set_xlabel("career stage $s_i \\leftrightarrow s_{{i+1}}$")
 
     return fig, a_ax, l_legends
